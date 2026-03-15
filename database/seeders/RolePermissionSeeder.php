@@ -54,6 +54,11 @@ class RolePermissionSeeder extends Seeder
                 'user_devices.update',
                 'user_devices.delete',
 
+                'shifts.view',
+                'shifts.create',
+                'shifts.update',
+                'shifts.delete',
+
             ];
 
             foreach ($permissions as $permission) {

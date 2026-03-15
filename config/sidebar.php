@@ -72,4 +72,19 @@ return [
         ],
     ],
 
+    [
+        'label' => 'Presence Settings',
+        'icon' => 'cog-8-tooth',
+        'children' => [
+
+            [
+                'label' => 'Shifts',
+                'icon' => 'arrows-up-down',
+                'route' => 'shifts.index',
+                'permission' => 'shifts.view',
+            ],
+
+        ],
+    ],
+
 ];

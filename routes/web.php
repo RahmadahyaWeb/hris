@@ -10,7 +10,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ACCESS CONTROL
     Route::livewire('roles', 'pages::roles.index')->name('roles.index');
 
-    // MASTER
+    // OGRANIZATION
     Route::livewire('branches', 'pages::branches.index')->name('branches.index');
     Route::livewire('divisions', 'pages::divisions.index')->name('divisions.index');
     Route::livewire('positions', 'pages::positions.index')->name('positions.index');
@@ -18,6 +18,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // USER MANAGEMENT
     Route::livewire('users', 'pages::users.index')->name('users.index');
     Route::livewire('user-devices', 'pages::user-devices.index')->name('user-devices.index');
+
+    // PRESENCE
+    Route::livewire('shifts', 'pages::shifts.index')->name('shifts.index');
+
 });
 
 require __DIR__.'/settings.php';
