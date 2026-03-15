@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\Branch;
+use App\Models\Position;
 use App\Models\User;
 use Exception;
 use Illuminate\Database\Seeder;
@@ -19,6 +21,7 @@ class RolePermissionSeeder extends Seeder
         try {
 
             $permissions = [
+
                 'dashboard.view',
 
                 'users.view',
@@ -31,13 +34,30 @@ class RolePermissionSeeder extends Seeder
                 'roles.update',
                 'roles.delete',
 
+                'branches.view',
+                'branches.create',
+                'branches.update',
+                'branches.delete',
+
+                'divisions.view',
+                'divisions.create',
+                'divisions.update',
+                'divisions.delete',
+
+                'positions.view',
+                'positions.create',
+                'positions.update',
+                'positions.delete',
+
             ];
 
             foreach ($permissions as $permission) {
+
                 Permission::firstOrCreate([
                     'name' => $permission,
                     'guard_name' => 'web',
                 ]);
+
             }
 
             $superAdminRole = Role::firstOrCreate([
@@ -59,58 +79,114 @@ class RolePermissionSeeder extends Seeder
 
             $adminRole->syncPermissions([
                 'dashboard.view',
-
-                'users.view',
-                'users.create',
-                'users.update',
-
-                'roles.view',
-                'roles.create',
-                'roles.update',
             ]);
 
             $userRole->syncPermissions([
                 'dashboard.view',
             ]);
 
-            $superAdmin = User::firstOrCreate(
-                [
-                    'email' => 'superadmin@example.com',
-                ],
+            $branch = Branch::first();
+
+            $positions = Position::with('division')->get();
+
+            $users = [
+
                 [
                     'name' => 'Super Admin',
-                    'password' => Hash::make('password'),
-                ]
-            );
+                    'email' => 'superadmin@example.com',
+                    'role' => $superAdminRole,
+                    'position' => 'Backend Developer',
+                ],
 
-            $admin = User::firstOrCreate(
                 [
+                    'name' => 'System Admin',
                     'email' => 'admin@example.com',
+                    'role' => $adminRole,
+                    'position' => 'HR Manager',
                 ],
-                [
-                    'name' => 'Admin',
-                    'password' => Hash::make('password'),
-                ]
-            );
 
-            $user = User::firstOrCreate(
                 [
-                    'email' => 'user@example.com',
+                    'name' => 'Backend Dev',
+                    'email' => 'backend@example.com',
+                    'role' => $userRole,
+                    'position' => 'Backend Developer',
                 ],
-                [
-                    'name' => 'User',
-                    'password' => Hash::make('password'),
-                ]
-            );
 
-            $superAdmin->assignRole($superAdminRole);
-            $admin->assignRole($adminRole);
-            $user->assignRole($userRole);
+                [
+                    'name' => 'Frontend Dev',
+                    'email' => 'frontend@example.com',
+                    'role' => $userRole,
+                    'position' => 'Frontend Developer',
+                ],
+
+                [
+                    'name' => 'DevOps',
+                    'email' => 'devops@example.com',
+                    'role' => $userRole,
+                    'position' => 'DevOps Engineer',
+                ],
+
+                [
+                    'name' => 'QA Engineer',
+                    'email' => 'qa@example.com',
+                    'role' => $userRole,
+                    'position' => 'QA Engineer',
+                ],
+
+                [
+                    'name' => 'HR Recruiter',
+                    'email' => 'recruiter@example.com',
+                    'role' => $userRole,
+                    'position' => 'Recruiter',
+                ],
+
+                [
+                    'name' => 'Finance Staff',
+                    'email' => 'finance@example.com',
+                    'role' => $userRole,
+                    'position' => 'Finance Staff',
+                ],
+
+                [
+                    'name' => 'Sales Manager',
+                    'email' => 'salesmanager@example.com',
+                    'role' => $userRole,
+                    'position' => 'Sales Manager',
+                ],
+
+                [
+                    'name' => 'Sales Executive',
+                    'email' => 'sales@example.com',
+                    'role' => $userRole,
+                    'position' => 'Sales Executive',
+                ],
+
+            ];
+
+            foreach ($users as $data) {
+
+                $position = $positions->firstWhere('title', $data['position']);
+
+                $user = User::firstOrCreate(
+                    ['email' => $data['email']],
+                    [
+                        'name' => $data['name'],
+                        'password' => Hash::make('password'),
+                        'branch_id' => $branch?->id,
+                        'position_id' => $position?->id,
+                    ]
+                );
+
+                $user->assignRole($data['role']);
+
+            }
 
             DB::commit();
 
         } catch (Exception $e) {
+
             DB::rollBack();
+
             throw $e;
         }
     }

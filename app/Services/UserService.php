@@ -58,6 +58,8 @@ class UserService
             $payload = [
                 'name' => $data['name'],
                 'email' => $data['email'],
+                'branch_id' => $data['branch_id'],
+                'position_id' => $data['position_id'],
             ];
 
             if (! empty($data['password'])) {

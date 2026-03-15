@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Branch;
+use App\Models\Position;
 use App\Models\User;
 use App\Services\UserService;
 use Illuminate\Support\Facades\Hash;
@@ -24,6 +26,10 @@ new class extends Component
 
     public array $roles = [];
 
+    public ?int $branch_id = null;
+
+    public ?int $position_id = null;
+
     public ?int $deleteId = null;
 
     #[Computed]
@@ -42,6 +48,19 @@ new class extends Component
         return Role::pluck('name')->toArray();
     }
 
+    #[Computed]
+    public function branches()
+    {
+        return Branch::pluck('name', 'id');
+    }
+
+    #[Computed]
+    public function positions()
+    {
+        return Position::with('division')
+            ->get();
+    }
+
     protected function rules(): array
     {
         return [
@@ -49,6 +68,8 @@ new class extends Component
             'email' => ['required', 'email', 'max:255', 'unique:users,email,'.$this->userId],
             'password' => [$this->userId ? 'nullable' : 'required', 'string', 'min:6'],
             'roles' => ['required', 'array'],
+            'branch_id' => ['nullable', 'exists:branches,id'],
+            'position_id' => ['nullable', 'exists:positions,id'],
         ];
     }
 
@@ -56,7 +77,10 @@ new class extends Component
     {
         $this->authorize('create', User::class);
 
-        $this->reset(['userId', 'name', 'email', 'password', 'roles']);
+        $this->reset([
+            'userId', 'name', 'email', 'password', 'roles',
+            'branch_id', 'position_id',
+        ]);
 
         $this->modal('user-form')->show();
     }
@@ -71,6 +95,8 @@ new class extends Component
         $this->name = $user->name;
         $this->email = $user->email;
         $this->roles = $user->roles->pluck('name')->toArray();
+        $this->branch_id = $user->branch_id;
+        $this->position_id = $user->position_id;
         $this->password = '';
 
         $this->modal('user-form')->show();
@@ -86,6 +112,8 @@ new class extends Component
             'name' => $validated['name'],
             'email' => $validated['email'],
             'roles' => $validated['roles'],
+            'branch_id' => $validated['branch_id'],
+            'position_id' => $validated['position_id'],
         ];
 
         if (! empty($validated['password'])) {
@@ -121,7 +149,10 @@ new class extends Component
             'variant' => 'success',
         ]);
 
-        $this->reset(['userId', 'name', 'email', 'password', 'roles']);
+        $this->reset([
+            'userId', 'name', 'email', 'password', 'roles',
+            'branch_id', 'position_id',
+        ]);
     }
 
     public function confirmDelete(int $id): void

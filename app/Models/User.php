@@ -25,6 +25,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'position_id', 'branch_id',
     ];
 
     /**
@@ -63,4 +64,35 @@ class User extends Authenticatable
             ->map(fn ($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
+
+    public function position()
+    {
+        return $this->belongsTo(Position::class);
+    }
+
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
+    }
+
+    // public function devices()
+    // {
+    //     return $this->hasMany(UserDevice::class);
+    // }
+
+    // public function attendances()
+    // {
+    //     return $this->hasMany(Attendance::class);
+    // }
+
+    // public function visits()
+    // {
+    //     return $this->hasMany(ClientVisit::class);
+    // }
+
+    // public function approvals()
+    // {
+    //     return $this->hasMany(Approval::class, 'approver_id');
+    // }
+
 }

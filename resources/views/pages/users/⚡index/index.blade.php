@@ -31,6 +31,8 @@
             <flux:table.columns>
                 <flux:table.column>Name</flux:table.column>
                 <flux:table.column>Email</flux:table.column>
+                <flux:table.column>Branch</flux:table.column>
+                <flux:table.column>Position</flux:table.column>
                 <flux:table.column>Roles</flux:table.column>
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
@@ -48,6 +50,18 @@
                         <flux:table.cell>
                             <span class="text-sm">
                                 {{ $user->email }}
+                            </span>
+                        </flux:table.cell>
+
+                        <flux:table.cell>
+                            <flux:badge color="zinc">
+                                {{ $user->branch?->name }}
+                            </flux:badge>
+                        </flux:table.cell>
+
+                        <flux:table.cell>
+                            <span class="text-sm">
+                                {{ $user->position?->title }}
                             </span>
                         </flux:table.cell>
 
@@ -145,6 +159,26 @@
             <flux:input label="Name" wire:model="name" placeholder="User name" />
 
             <flux:input label="Email" type="email" wire:model="email" placeholder="user@email.com" />
+
+            <flux:select label="Branch" wire:model="branch_id">
+                <option value="">Select Branch</option>
+
+                @foreach ($this->branches as $id => $branch)
+                    <option value="{{ $id }}">
+                        {{ $branch }}
+                    </option>
+                @endforeach
+            </flux:select>
+
+            <flux:select label="Position" wire:model="position_id">
+                <option value="">Select Position</option>
+
+                @foreach ($this->positions as $position)
+                    <option value="{{ $position->id }}">
+                        {{ $position->title }}
+                    </option>
+                @endforeach
+            </flux:select>
 
             <flux:input label="Password" type="password" wire:model="password"
                 placeholder="Leave empty when not changing" />
