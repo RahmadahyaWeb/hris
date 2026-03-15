@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\User;
+use Exception;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+
+class UserService
+{
+    public function paginate(int $perPage = 10): LengthAwarePaginator
+    {
+        try {
+            return User::with('roles')
+                ->latest()
+                ->paginate($perPage);
+        } catch (Exception $e) {
+            throw $e;
+        }
+    }
+
+    public function create(array $data): User
+    {
+        DB::beginTransaction();
+
+        try {
+
+            $user = User::create([
+                'name' => $data['name'],
+                'email' => $data['email'],
+                'password' => Hash::make($data['password']),
+            ]);
+
+            if (! empty($data['roles'])) {
+                $user->syncRoles($data['roles']);
+            }
+
+            DB::commit();
+
+            return $user->load('roles');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function update(int $id, array $data): User
+    {
+        DB::beginTransaction();
+
+        try {
+
+            $user = User::findOrFail($id);
+
+            $payload = [
+                'name' => $data['name'],
+                'email' => $data['email'],
+            ];
+
+            if (! empty($data['password'])) {
+                $payload['password'] = Hash::make($data['password']);
+            }
+
+            $user->update($payload);
+
+            if (isset($data['roles'])) {
+                $user->syncRoles($data['roles']);
+            }
+
+            DB::commit();
+
+            return $user->load('roles');
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function delete(int $id): void
+    {
+        DB::beginTransaction();
+
+        try {
+
+            $user = User::findOrFail($id);
+            $user->delete();
+
+            DB::commit();
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+}
