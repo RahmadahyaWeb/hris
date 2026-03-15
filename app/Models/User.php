@@ -75,10 +75,10 @@ class User extends Authenticatable
         return $this->belongsTo(Branch::class);
     }
 
-    // public function devices()
-    // {
-    //     return $this->hasMany(UserDevice::class);
-    // }
+    public function devices()
+    {
+        return $this->hasMany(UserDevice::class);
+    }
 
     // public function attendances()
     // {

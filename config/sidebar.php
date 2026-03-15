@@ -62,6 +62,12 @@ return [
                 'route' => 'users.index',
                 'permission' => 'users.view',
             ],
+            [
+                'label' => 'User Devices',
+                'icon' => 'device-phone-mobile',
+                'route' => 'user-devices.index',
+                'permission' => 'user_devices.view',
+            ],
 
         ],
     ],

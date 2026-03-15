@@ -17,6 +17,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // USER MANAGEMENT
     Route::livewire('users', 'pages::users.index')->name('users.index');
+    Route::livewire('user-devices', 'pages::user-devices.index')->name('user-devices.index');
 });
 
 require __DIR__.'/settings.php';

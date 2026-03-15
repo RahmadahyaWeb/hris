@@ -9,28 +9,13 @@
             @csrf
 
             <!-- Email Address -->
-            <flux:input
-                name="email"
-                :label="__('Email address')"
-                :value="old('email')"
-                type="email"
-                required
-                autofocus
-                autocomplete="email"
-                placeholder="email@example.com"
-            />
+            <flux:input name="email" :label="__('Email address')" :value="old('email')" type="email" required
+                autofocus autocomplete="email" placeholder="email@example.com" />
 
             <!-- Password -->
             <div class="relative">
-                <flux:input
-                    name="password"
-                    :label="__('Password')"
-                    type="password"
-                    required
-                    autocomplete="current-password"
-                    :placeholder="__('Password')"
-                    viewable
-                />
+                <flux:input name="password" :label="__('Password')" type="password" required
+                    autocomplete="current-password" :placeholder="__('Password')" viewable />
 
                 @if (Route::has('password.request'))
                     <flux:link class="absolute top-0 text-sm end-0" :href="route('password.request')" wire:navigate>
@@ -47,6 +32,8 @@
                     {{ __('Log in') }}
                 </flux:button>
             </div>
+
+            <input type="hidden" name="device_uuid" id="device_uuid">
         </form>
 
         @if (Route::has('register'))
@@ -56,4 +43,19 @@
             </div>
         @endif
     </div>
+
+    <script>
+        (function() {
+
+            let deviceUuid = localStorage.getItem('device_uuid');
+
+            if (!deviceUuid) {
+                deviceUuid = crypto.randomUUID();
+                localStorage.setItem('device_uuid', deviceUuid);
+            }
+
+            document.getElementById('device_uuid').value = deviceUuid;
+
+        })();
+    </script>
 </x-layouts::auth>
