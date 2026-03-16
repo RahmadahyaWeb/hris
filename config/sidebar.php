@@ -123,6 +123,12 @@ return [
                 'permission' => '',
             ],
             [
+                'label' => 'Leaves',
+                'icon' => 'document',
+                'route' => 'leaves.index',
+                'permission' => 'leaves.view',
+            ],
+            [
                 'label' => 'Attendances',
                 'icon' => 'bolt',
                 'route' => 'attendances.index',

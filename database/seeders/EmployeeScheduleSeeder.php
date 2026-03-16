@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\EmployeeSchedule;
 use App\Models\Shift;
 use App\Models\User;
-use App\Models\WorkCalendar;
 use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Carbon;
@@ -19,37 +18,33 @@ class EmployeeScheduleSeeder extends Seeder
 
         try {
 
-            $users = User::all();
+            $shift = Shift::firstOrFail();
 
-            $shift = Shift::first();
+            $users = User::limit(5)->get();
 
-            $startDate = now()->subMonths(2)->startOfDay();
-            $endDate = now()->endOfDay();
+            $start = Carbon::create(now()->year, 2, 1);
+            $end = now();
 
-            $period = Carbon::parse($startDate);
+            foreach ($users as $user) {
 
-            while ($period->lte($endDate)) {
+                $date = $start->copy();
 
-                $calendar = WorkCalendar::whereDate('date', $period)->first();
+                while ($date->lte($end)) {
 
-                if ($calendar && $calendar->is_holiday) {
-                    $period->addDay();
+                    if (! $date->isWeekend()) {
 
-                    continue;
+                        EmployeeSchedule::firstOrCreate([
+                            'user_id' => $user->id,
+                            'date' => $date->toDateString(),
+                        ], [
+                            'shift_id' => $shift->id,
+                        ]);
+
+                    }
+
+                    $date->addDay();
                 }
 
-                foreach ($users as $user) {
-
-                    EmployeeSchedule::firstOrCreate([
-                        'user_id' => $user->id,
-                        'date' => $period->toDateString(),
-                    ], [
-                        'shift_id' => $shift->id,
-                    ]);
-
-                }
-
-                $period->addDay();
             }
 
             DB::commit();
@@ -57,7 +52,6 @@ class EmployeeScheduleSeeder extends Seeder
         } catch (Exception $e) {
 
             DB::rollBack();
-
             throw $e;
         }
     }

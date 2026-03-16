@@ -30,6 +30,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('attendances-monitoring', 'pages::attendances.monitoring.index')->name('attendances-monitoring.index');
     Route::livewire('attendances-rules', 'pages::attendances.rules.index')->name('attendances-rules.index');
 
+    // LEAVE
+    Route::livewire('leaves', 'pages::leaves.index')->name('leaves.index');
+
     // REPORT
     Route::livewire('reports/period', 'pages::reports.period.index')->name('reports.periode.index');
 

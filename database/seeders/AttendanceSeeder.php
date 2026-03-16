@@ -18,55 +18,106 @@ class AttendanceSeeder extends Seeder
 
         try {
 
-            $schedules = EmployeeSchedule::with(['shift', 'user'])
+            $schedules = EmployeeSchedule::with('shift')
                 ->whereBetween('date', [
-                    now()->subMonths(2)->startOfDay(),
-                    now()->endOfDay(),
+                    Carbon::create(now()->year, 2, 1),
+                    now(),
                 ])
                 ->get();
 
-            $stateService = new AttendanceStateService;
-
             foreach ($schedules as $schedule) {
 
-                $shiftStart = Carbon::parse($schedule->date)
+                /*
+                |------------------------------------------------------------
+                | Build shift start & end safely
+                |------------------------------------------------------------
+                */
+
+                $date = Carbon::parse($schedule->date)->startOfDay();
+
+                $shiftStart = $date->copy()
                     ->setTimeFromTimeString($schedule->shift->start_time);
 
-                $shiftEnd = Carbon::parse($schedule->date)
+                $shiftEnd = $date->copy()
                     ->setTimeFromTimeString($schedule->shift->end_time);
 
-                /**
-                 * Simulate attendance probability
-                 */
-                if (fake()->boolean(90) === false) {
-                    continue;
-                }
+                /*
+                |------------------------------------------------------------
+                | Generate realistic attendance time
+                |------------------------------------------------------------
+                */
 
-                /**
-                 * Random checkin variation
-                 */
-                $checkin = $shiftStart->copy()->addMinutes(fake()->numberBetween(-10, 30));
+                $checkin = $shiftStart->copy()
+                    ->addMinutes(rand(-10, 20));
 
-                /**
-                 * Random checkout variation
-                 */
-                $checkout = $shiftEnd->copy()->addMinutes(fake()->numberBetween(-20, 60));
+                $checkout = $shiftEnd->copy()
+                    ->addMinutes(rand(-20, 60));
+
+                /*
+                |------------------------------------------------------------
+                | Create attendance
+                |------------------------------------------------------------
+                */
 
                 $attendance = Attendance::create([
+
                     'user_id' => $schedule->user_id,
+
                     'date' => $schedule->date,
+
                     'checkin_at' => $checkin,
+
                     'checkout_at' => $checkout,
+
                 ]);
 
-                $result = $stateService->resolve($attendance, $schedule);
+                /*
+                |------------------------------------------------------------
+                | Calculate attendance state
+                |------------------------------------------------------------
+                */
+
+                $stateService = new AttendanceStateService;
+
+                $state = $stateService->resolve(
+                    $attendance,
+                    $schedule
+                );
+
+                /*
+                |------------------------------------------------------------
+                | Calculate minutes
+                |------------------------------------------------------------
+                */
+
+                $lateMinutes = $checkin->greaterThan($shiftStart)
+                    ? $shiftStart->diffInMinutes($checkin)
+                    : 0;
+
+                $workMinutes = $checkin->diffInMinutes($checkout);
+
+                $overtimeMinutes = $checkout->greaterThan($shiftEnd)
+                    ? $shiftEnd->diffInMinutes($checkout)
+                    : 0;
+
+                /*
+                |------------------------------------------------------------
+                | Update attendance
+                |------------------------------------------------------------
+                */
 
                 $attendance->update([
-                    'state' => $result['state'],
-                    'late_minutes' => $result['late_minutes'],
-                    'work_minutes' => $result['work_minutes'],
-                    'overtime_minutes' => $result['overtime_minutes'],
+
+                    'state' => $state['state'],
+
+                    'late_minutes' => $lateMinutes,
+
+                    'work_minutes' => $workMinutes,
+
+                    'overtime_minutes' => $overtimeMinutes,
+
                 ]);
+
             }
 
             DB::commit();
