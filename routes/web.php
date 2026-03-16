@@ -23,6 +23,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('shifts', 'pages::shifts.index')->name('shifts.index');
     Route::livewire('work-calendars', 'pages::work-calendars.index')->name('work-calendars.index');
     Route::livewire('calendars', 'pages::calendars.index')->name('calendars.index');
+    Route::livewire('employee-schedules', 'pages::employee-schedules.index')->name('employee-schedules.index');
 
 });
 

@@ -95,6 +95,12 @@ return [
                 'route' => 'calendars.index',
                 'permission' => '',
             ],
+            [
+                'label' => 'Employee Schedules',
+                'icon' => 'clock',
+                'route' => 'employee-schedules.index',
+                'permission' => 'employee_schedules.view',
+            ],
 
         ],
     ],
