@@ -77,6 +77,8 @@ class RolePermissionSeeder extends Seeder
                 'leaves.update',
                 'leaves.delete',
                 'leaves.approve',
+
+                'attendances_monitoring.view',
             ];
 
             foreach ($permissions as $permission) {

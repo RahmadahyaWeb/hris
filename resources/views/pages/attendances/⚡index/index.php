@@ -42,6 +42,8 @@ new class extends Component
 
     public ?string $attendanceState = null;
 
+    public bool $shiftCrossMidnight = false;
+
     public function mount(): void
     {
         $user = Auth::user();
@@ -60,6 +62,8 @@ new class extends Component
         if ($schedule) {
             $this->shiftStart = $schedule->shift->start_time;
             $this->shiftEnd = $schedule->shift->end_time;
+            $this->shiftCrossMidnight = $schedule->shift->cross_midnight;
+
         }
 
         $attendance = Attendance::where([
@@ -109,16 +113,12 @@ new class extends Component
             $this->longitude ?? 0,
             $mode
         );
+
+        $this->updateCountdown();
     }
 
     public function updateCountdown(): void
     {
-        if ($this->todayAttendance['checkout'] ?? false) {
-            $this->countdown = 'Shift completed';
-
-            return;
-        }
-
         if (! $this->shiftStart || ! $this->shiftEnd) {
             $this->countdown = '-';
 
@@ -130,13 +130,77 @@ new class extends Component
         $start = today()->setTimeFromTimeString($this->shiftStart);
         $end = today()->setTimeFromTimeString($this->shiftEnd);
 
-        if ($now->lt($start)) {
+        /*
+        |--------------------------------------------------------------------------
+        | Cross Midnight Shift
+        |--------------------------------------------------------------------------
+        */
 
-            $diff = $now->diff($start);
+        if ($this->shiftCrossMidnight ?? false) {
 
-            $this->countdown = $diff->format('%Hh %Im to check-in');
+            // end pasti besok
+            if ($end->lte($start)) {
+                $end->addDay();
+            }
 
-        } elseif ($now->between($start, $end)) {
+            // jika sekarang setelah midnight
+            if ($now->lt($start) && $now->hour < 12) {
+                $start->subDay();
+                $end->subDay();
+            }
+        }
+
+        $checkin = $this->todayAttendance['checkin'] ?? null;
+        $checkout = $this->todayAttendance['checkout'] ?? null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Already Checked Out
+        |--------------------------------------------------------------------------
+        */
+
+        if (! empty($checkout)) {
+            $this->countdown = 'Shift completed';
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Before Check-in
+        |--------------------------------------------------------------------------
+        */
+
+        if (empty($checkin)) {
+
+            if ($now->lt($start)) {
+
+                $diff = $now->diff($start);
+
+                $this->countdown = $diff->format('%Hh %Im to check-in');
+
+            } elseif ($now->between($start, $end)) {
+
+                $diff = $start->diff($now);
+
+                $this->countdown = $diff->format('Late %Hh %Im');
+
+            } else {
+
+                $this->countdown = 'Shift ended';
+
+            }
+
+            return;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Checked In → Waiting Checkout
+        |--------------------------------------------------------------------------
+        */
+
+        if ($now->lt($end)) {
 
             $diff = $now->diff($end);
 
@@ -144,7 +208,10 @@ new class extends Component
 
         } else {
 
-            $this->countdown = 'Shift completed';
+            $diff = $end->diff($now);
+
+            $this->countdown = $diff->format('Overtime %Hh %Im');
+
         }
     }
 

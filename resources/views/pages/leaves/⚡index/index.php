@@ -163,7 +163,7 @@ new class extends Component
                 'reason',
             ]);
 
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
 
             DB::rollBack();
 
@@ -201,14 +201,14 @@ new class extends Component
                 'variant' => 'success',
             ]);
 
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
 
             DB::rollBack();
 
             $this->dispatch('alert', [
-                'title' => 'Success',
-                'message' => 'Leave approved successfully',
-                'variant' => 'success',
+                'title' => 'Error',
+                'message' => $e->getMessage(),
+                'variant' => 'danger',
             ]);
         }
     }
@@ -235,7 +235,7 @@ new class extends Component
                 'variant' => 'success',
             ]);
 
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
 
             DB::rollBack();
 
@@ -287,7 +287,7 @@ new class extends Component
                 'variant' => 'success',
             ]);
 
-        } catch (Throwable $e) {
+        } catch (Exception $e) {
 
             DB::rollBack();
 

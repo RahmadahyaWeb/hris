@@ -16,13 +16,29 @@ class AttendanceStateService
         $earlyTolerance = $rule->earlyCheckoutTolerance();
         $overtimeAfter = $rule->overtimeAfter();
 
-        $shiftStart = Carbon::parse($schedule->shift->start_time);
-        $shiftEnd = Carbon::parse($schedule->shift->end_time);
+        $shiftStart = Carbon::parse($schedule->date)
+            ->setTimeFromTimeString($schedule->shift->start_time);
+
+        $shiftEnd = Carbon::parse($schedule->date)
+            ->setTimeFromTimeString($schedule->shift->end_time);
+
+        if ($schedule->shift->cross_midnight || $shiftEnd->lte($shiftStart)) {
+            $shiftEnd->addDay();
+        }
 
         $checkin = Carbon::parse($attendance->checkin_at);
+
         $checkout = $attendance->checkout_at
             ? Carbon::parse($attendance->checkout_at)
             : null;
+
+        if ($checkin->lt($shiftStart) && $schedule->shift->cross_midnight) {
+            $checkin->addDay();
+        }
+
+        if ($checkout && $checkout->lt($shiftStart) && $schedule->shift->cross_midnight) {
+            $checkout->addDay();
+        }
 
         $lateMinutes = 0;
         $workMinutes = 0;
@@ -43,6 +59,10 @@ class AttendanceStateService
 
             $workMinutes = $checkin->diffInMinutes($checkout);
 
+            if ($checkout->lessThan($shiftEnd->copy()->subMinutes($earlyTolerance))) {
+                $state = 'early_checkout';
+            }
+
             if ($checkout->greaterThan($shiftEnd)) {
 
                 $overtimeMinutes = $shiftEnd->diffInMinutes($checkout);
@@ -50,10 +70,6 @@ class AttendanceStateService
                 if ($overtimeMinutes >= $overtimeAfter) {
                     $state = 'overtime';
                 }
-            }
-
-            if ($checkout->lessThan($shiftEnd->copy()->subMinutes($earlyTolerance))) {
-                $state = 'early_checkout';
             }
         }
 

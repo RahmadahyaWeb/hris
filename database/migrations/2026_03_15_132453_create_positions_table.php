@@ -12,12 +12,22 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('positions', function (Blueprint $table) {
+
             $table->id();
+
+            $table->foreignId('division_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->foreignId('parent_id')
+                ->nullable()
+                ->constrained('positions')
+                ->nullOnDelete();
+
             $table->string('title');
-            $table->unsignedBigInteger('division_id');
+
             $table->timestamps();
 
-            $table->foreign('division_id')->references('id')->on('divisions')->onDelete('cascade');
         });
     }
 

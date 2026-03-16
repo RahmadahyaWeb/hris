@@ -51,6 +51,26 @@ class SidebarItem extends Component
             return false;
         }
 
+        if (! empty($this->children)) {
+            foreach ($this->children as $child) {
+
+                $childRole = $child['role'] ?? null;
+                $childPermission = $child['permission'] ?? null;
+
+                if ($childRole && ! $user->hasRole($childRole)) {
+                    continue;
+                }
+
+                if ($childPermission && ! $user->can($childPermission)) {
+                    continue;
+                }
+
+                return true;
+            }
+
+            return false;
+        }
+
         return true;
     }
 

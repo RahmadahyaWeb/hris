@@ -217,7 +217,7 @@
     </flux:card>
 
     {{-- Action Button --}}
-    <div class="sticky bottom-10 bg-white pt-4">
+    <div class="sticky bottom-0 bg-white pt-4">
 
         <flux:button class="w-full h-12 text-base" icon="{{ $checkedIn ? 'arrow-right-circle' : 'map-pin' }}"
             wire:click="attend">

@@ -7,7 +7,6 @@ use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Division;
 use App\Models\EmployeeSchedule;
-use App\Models\Leave;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\Position;
@@ -35,13 +34,14 @@ class EnterpriseDemoSeeder extends Seeder
             |------------------------------------------------------------
             */
 
-            $branch = Branch::firstOrCreate([
-                'name' => 'Head Office',
-            ], [
-                'latitude' => -3.3186000,
-                'longitude' => 114.5944000,
-                'radius' => 200,
-            ]);
+            $branch = Branch::firstOrCreate(
+                ['name' => 'Head Office'],
+                [
+                    'latitude' => -3.3186000,
+                    'longitude' => 114.5944000,
+                    'radius' => 200,
+                ]
+            );
 
             /*
             |------------------------------------------------------------
@@ -55,38 +55,48 @@ class EnterpriseDemoSeeder extends Seeder
 
             /*
             |------------------------------------------------------------
-            | Positions
+            | Positions (Hierarchy)
             |------------------------------------------------------------
             */
 
-            $positions = [
+            $engineeringManager = Position::firstOrCreate([
+                'division_id' => $engineering->id,
+                'title' => 'Engineering Manager',
+                'parent_id' => null,
+            ]);
 
-                Position::firstOrCreate([
-                    'division_id' => $engineering->id,
-                    'title' => 'Backend Developer',
-                ]),
+            $backend = Position::firstOrCreate([
+                'division_id' => $engineering->id,
+                'title' => 'Backend Developer',
+            ], [
+                'parent_id' => $engineeringManager->id,
+            ]);
 
-                Position::firstOrCreate([
-                    'division_id' => $engineering->id,
-                    'title' => 'Frontend Developer',
-                ]),
+            $frontend = Position::firstOrCreate([
+                'division_id' => $engineering->id,
+                'title' => 'Frontend Developer',
+            ], [
+                'parent_id' => $engineeringManager->id,
+            ]);
 
-                Position::firstOrCreate([
-                    'division_id' => $engineering->id,
-                    'title' => 'DevOps Engineer',
-                ]),
+            $devops = Position::firstOrCreate([
+                'division_id' => $engineering->id,
+                'title' => 'DevOps Engineer',
+            ], [
+                'parent_id' => $engineeringManager->id,
+            ]);
 
-                Position::firstOrCreate([
-                    'division_id' => $hr->id,
-                    'title' => 'HR Manager',
-                ]),
+            $hrManager = Position::firstOrCreate([
+                'division_id' => $hr->id,
+                'title' => 'HR Manager',
+                'parent_id' => null,
+            ]);
 
-                Position::firstOrCreate([
-                    'division_id' => $sales->id,
-                    'title' => 'Sales Executive',
-                ]),
-
-            ];
+            $salesExecutive = Position::firstOrCreate([
+                'division_id' => $sales->id,
+                'title' => 'Sales Executive',
+                'parent_id' => null,
+            ]);
 
             /*
             |------------------------------------------------------------
@@ -94,58 +104,73 @@ class EnterpriseDemoSeeder extends Seeder
             |------------------------------------------------------------
             */
 
+            $engineeringManagerUser = User::firstOrCreate(
+                ['email' => 'engmanager@example.com'],
+                [
+                    'name' => 'Engineering Manager',
+                    'password' => Hash::make('password'),
+                    'branch_id' => $branch->id,
+                    'position_id' => $engineeringManager->id,
+                ]
+            );
+
+            $backendUser = User::firstOrCreate(
+                ['email' => 'backend@example.com'],
+                [
+                    'name' => 'Backend Dev',
+                    'password' => Hash::make('password'),
+                    'branch_id' => $branch->id,
+                    'position_id' => $backend->id,
+                ]
+            );
+
+            $frontendUser = User::firstOrCreate(
+                ['email' => 'frontend@example.com'],
+                [
+                    'name' => 'Frontend Dev',
+                    'password' => Hash::make('password'),
+                    'branch_id' => $branch->id,
+                    'position_id' => $frontend->id,
+                ]
+            );
+
+            $devopsUser = User::firstOrCreate(
+                ['email' => 'devops@example.com'],
+                [
+                    'name' => 'DevOps Engineer',
+                    'password' => Hash::make('password'),
+                    'branch_id' => $branch->id,
+                    'position_id' => $devops->id,
+                ]
+            );
+
+            $hrUser = User::firstOrCreate(
+                ['email' => 'hr@example.com'],
+                [
+                    'name' => 'HR Manager',
+                    'password' => Hash::make('password'),
+                    'branch_id' => $branch->id,
+                    'position_id' => $hrManager->id,
+                ]
+            );
+
+            $salesUser = User::firstOrCreate(
+                ['email' => 'sales@example.com'],
+                [
+                    'name' => 'Sales Executive',
+                    'password' => Hash::make('password'),
+                    'branch_id' => $branch->id,
+                    'position_id' => $salesExecutive->id,
+                ]
+            );
+
             $users = [
-
-                User::firstOrCreate(
-                    ['email' => 'backend@example.com'],
-                    [
-                        'name' => 'Backend Dev',
-                        'password' => Hash::make('password'),
-                        'branch_id' => $branch->id,
-                        'position_id' => $positions[0]->id,
-                    ]
-                ),
-
-                User::firstOrCreate(
-                    ['email' => 'frontend@example.com'],
-                    [
-                        'name' => 'Frontend Dev',
-                        'password' => Hash::make('password'),
-                        'branch_id' => $branch->id,
-                        'position_id' => $positions[1]->id,
-                    ]
-                ),
-
-                User::firstOrCreate(
-                    ['email' => 'devops@example.com'],
-                    [
-                        'name' => 'DevOps Engineer',
-                        'password' => Hash::make('password'),
-                        'branch_id' => $branch->id,
-                        'position_id' => $positions[2]->id,
-                    ]
-                ),
-
-                User::firstOrCreate(
-                    ['email' => 'hr@example.com'],
-                    [
-                        'name' => 'HR Manager',
-                        'password' => Hash::make('password'),
-                        'branch_id' => $branch->id,
-                        'position_id' => $positions[3]->id,
-                    ]
-                ),
-
-                User::firstOrCreate(
-                    ['email' => 'sales@example.com'],
-                    [
-                        'name' => 'Sales Executive',
-                        'password' => Hash::make('password'),
-                        'branch_id' => $branch->id,
-                        'position_id' => $positions[4]->id,
-                    ]
-                ),
-
+                $engineeringManagerUser,
+                $backendUser,
+                $frontendUser,
+                $devopsUser,
+                $hrUser,
+                $salesUser,
             ];
 
             /*
@@ -154,13 +179,14 @@ class EnterpriseDemoSeeder extends Seeder
             |------------------------------------------------------------
             */
 
-            $shift = Shift::firstOrCreate([
-                'name' => 'Morning',
-            ], [
-                'start_time' => '08:00:00',
-                'end_time' => '16:00:00',
-                'cross_midnight' => false,
-            ]);
+            $shift = Shift::firstOrCreate(
+                ['name' => 'Morning'],
+                [
+                    'start_time' => '08:00:00',
+                    'end_time' => '16:00:00',
+                    'cross_midnight' => false,
+                ]
+            );
 
             /*
             |------------------------------------------------------------
@@ -169,18 +195,19 @@ class EnterpriseDemoSeeder extends Seeder
             */
 
             $start = Carbon::create(now()->year, 2, 1);
-            $end = now();
+            $end = Carbon::create(2026, 3, 15);
 
             $date = $start->copy();
 
             while ($date->lte($end)) {
 
-                WorkCalendar::firstOrCreate([
-                    'date' => $date->toDateString(),
-                ], [
-                    'is_holiday' => $date->isWeekend(),
-                    'description' => $date->isWeekend() ? 'Weekend' : null,
-                ]);
+                WorkCalendar::firstOrCreate(
+                    ['date' => $date->toDateString()],
+                    [
+                        'is_holiday' => $date->isWeekend(),
+                        'description' => $date->isWeekend() ? 'Weekend' : null,
+                    ]
+                );
 
                 $date->addDay();
             }
@@ -199,15 +226,16 @@ class EnterpriseDemoSeeder extends Seeder
 
                     foreach ($users as $user) {
 
-                        EmployeeSchedule::firstOrCreate([
-                            'user_id' => $user->id,
-                            'date' => $date->toDateString(),
-                        ], [
-                            'shift_id' => $shift->id,
-                        ]);
-
+                        EmployeeSchedule::firstOrCreate(
+                            [
+                                'user_id' => $user->id,
+                                'date' => $date->toDateString(),
+                            ],
+                            [
+                                'shift_id' => $shift->id,
+                            ]
+                        );
                     }
-
                 }
 
                 $date->addDay();
@@ -264,7 +292,6 @@ class EnterpriseDemoSeeder extends Seeder
             */
 
             $annual = LeaveType::firstOrCreate(['name' => 'Annual Leave']);
-            $sick = LeaveType::firstOrCreate(['name' => 'Sick Leave']);
 
             /*
             |------------------------------------------------------------
@@ -294,15 +321,18 @@ class EnterpriseDemoSeeder extends Seeder
 
             foreach ($users as $user) {
 
-                LeaveBalance::firstOrCreate([
-                    'user_id' => $user->id,
-                    'leave_type_id' => $annual->id,
-                    'year' => now()->year,
-                ], [
-                    'total_days' => 12,
-                    'used_days' => 0,
-                    'remaining_days' => 12,
-                ]);
+                LeaveBalance::firstOrCreate(
+                    [
+                        'user_id' => $user->id,
+                        'leave_type_id' => $annual->id,
+                        'year' => now()->year,
+                    ],
+                    [
+                        'total_days' => 12,
+                        'used_days' => 0,
+                        'remaining_days' => 12,
+                    ]
+                );
             }
 
             DB::commit();
@@ -310,7 +340,6 @@ class EnterpriseDemoSeeder extends Seeder
         } catch (Exception $e) {
 
             DB::rollBack();
-
             throw $e;
         }
     }

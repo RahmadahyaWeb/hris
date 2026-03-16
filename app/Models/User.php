@@ -80,19 +80,17 @@ class User extends Authenticatable
         return $this->hasMany(UserDevice::class);
     }
 
-    // public function attendances()
-    // {
-    //     return $this->hasMany(Attendance::class);
-    // }
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
 
-    // public function visits()
-    // {
-    //     return $this->hasMany(ClientVisit::class);
-    // }
+    public function manager()
+    {
+        if (! $this->position || ! $this->position->parent) {
+            return null;
+        }
 
-    // public function approvals()
-    // {
-    //     return $this->hasMany(Approval::class, 'approver_id');
-    // }
-
+        return User::where('position_id', $this->position->parent->id)->first();
+    }
 }

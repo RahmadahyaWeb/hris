@@ -22,7 +22,10 @@ class LeaveApprovalService
                 throw new Exception('Leave request already finalized.');
             }
 
-            $steps = ApprovalStep::where('leave_type_id', $leave->leave_type_id)
+            $steps = ApprovalStep::where(
+                'leave_type_id',
+                $leave->leave_type_id
+            )
                 ->orderBy('step_order')
                 ->get();
 
@@ -36,7 +39,29 @@ class LeaveApprovalService
                 throw new Exception('Approval already completed.');
             }
 
+            $step = $steps[$currentStep];
+
+            $resolver = new ApprovalResolver;
+
+            $approver = match ($step->approver_type) {
+
+                'manager' => $resolver->resolveManager($leave),
+
+                'hr' => $resolver->resolveHr(),
+
+                default => null,
+
+            };
+
             $approverId ??= Auth::id();
+
+            if (! $approver) {
+                throw new Exception('Approver not configured.');
+            }
+
+            if ($approver->id !== $approverId) {
+                throw new Exception('You are not the assigned approver.');
+            }
 
             ApprovalHistory::create([
                 'leave_id' => $leave->id,

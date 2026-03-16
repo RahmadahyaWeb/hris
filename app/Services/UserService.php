@@ -6,7 +6,6 @@ use App\Models\User;
 use Exception;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 
 class UserService
 {
@@ -30,7 +29,9 @@ class UserService
             $user = User::create([
                 'name' => $data['name'],
                 'email' => $data['email'],
-                'password' => Hash::make($data['password']),
+                'password' => $data['password'],
+                'branch_id' => $data['branch_id'],
+                'position_id' => $data['position_id'],
             ]);
 
             if (! empty($data['roles'])) {
@@ -63,7 +64,7 @@ class UserService
             ];
 
             if (! empty($data['password'])) {
-                $payload['password'] = Hash::make($data['password']);
+                $payload['password'] = $data['password'];
             }
 
             $user->update($payload);
