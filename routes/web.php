@@ -21,6 +21,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // PRESENCE
     Route::livewire('shifts', 'pages::shifts.index')->name('shifts.index');
+    Route::livewire('work-calendars', 'pages::work-calendars.index')->name('work-calendars.index');
+    Route::livewire('calendars', 'pages::calendars.index')->name('calendars.index');
 
 });
 

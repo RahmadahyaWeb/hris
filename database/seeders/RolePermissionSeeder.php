@@ -59,6 +59,11 @@ class RolePermissionSeeder extends Seeder
                 'shifts.update',
                 'shifts.delete',
 
+                'work_calendars.view',
+                'work_calendars.create',
+                'work_calendars.update',
+                'work_calendars.delete',
+
             ];
 
             foreach ($permissions as $permission) {

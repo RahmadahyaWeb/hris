@@ -83,6 +83,18 @@ return [
                 'route' => 'shifts.index',
                 'permission' => 'shifts.view',
             ],
+            [
+                'label' => 'Work Calendars',
+                'icon' => 'calendar-days',
+                'route' => 'work-calendars.index',
+                'permission' => 'work_calendars.view',
+            ],
+            [
+                'label' => 'Calendars',
+                'icon' => 'calendar-days',
+                'route' => 'calendars.index',
+                'permission' => '',
+            ],
 
         ],
     ],
