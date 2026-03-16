@@ -7,6 +7,7 @@ use App\Models\Branch;
 use App\Models\Division;
 use App\Models\EmployeeSchedule;
 use App\Models\Leave;
+use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\Position;
 use App\Models\Shift;
@@ -88,7 +89,7 @@ class EnterpriseDemoSeeder extends Seeder
 
             /*
             |------------------------------------------------------------
-            | Users (5)
+            | Users
             |------------------------------------------------------------
             */
 
@@ -213,15 +214,19 @@ class EnterpriseDemoSeeder extends Seeder
 
             /*
             |------------------------------------------------------------
-            | Attendance
+            | Attendance (Realistic Data)
             |------------------------------------------------------------
             */
 
-            $schedules = EmployeeSchedule::with('shift')
-                ->whereBetween('date', [$start, $end])
-                ->get();
+            $schedules = EmployeeSchedule::with('shift')->get();
 
             foreach ($schedules as $schedule) {
+
+                $rand = rand(1, 100);
+
+                if ($rand <= 5) {
+                    continue; // absent
+                }
 
                 $date = Carbon::parse($schedule->date)->startOfDay();
 
@@ -231,45 +236,50 @@ class EnterpriseDemoSeeder extends Seeder
                 $shiftEnd = $date->copy()
                     ->setTimeFromTimeString($schedule->shift->end_time);
 
-                $checkin = $shiftStart->copy()->addMinutes(rand(-10, 25));
+                if ($rand <= 70) {
 
-                $checkout = $shiftEnd->copy()->addMinutes(rand(-15, 60));
+                    $checkin = $shiftStart->copy()->addMinutes(rand(-5, 5));
+
+                } elseif ($rand <= 85) {
+
+                    $checkin = $shiftStart->copy()->addMinutes(rand(10, 40));
+
+                } else {
+
+                    $checkin = $shiftStart->copy()->addMinutes(rand(-5, 5));
+
+                }
+
+                if ($rand >= 90) {
+
+                    $checkout = $shiftEnd->copy()->addMinutes(rand(30, 90));
+
+                } else {
+
+                    $checkout = $shiftEnd->copy()->addMinutes(rand(-10, 10));
+
+                }
 
                 $attendance = Attendance::create([
-
                     'user_id' => $schedule->user_id,
-
                     'date' => $schedule->date,
-
                     'checkin_at' => $checkin,
-
                     'checkout_at' => $checkout,
-
                 ]);
 
                 $stateService = new AttendanceStateService;
 
                 $state = $stateService->resolve($attendance, $schedule);
 
-                $lateMinutes = $checkin->greaterThan($shiftStart)
-                    ? $shiftStart->diffInMinutes($checkin)
-                    : 0;
-
-                $workMinutes = $checkin->diffInMinutes($checkout);
-
-                $overtimeMinutes = $checkout->greaterThan($shiftEnd)
-                    ? $shiftEnd->diffInMinutes($checkout)
-                    : 0;
-
                 $attendance->update([
 
                     'state' => $state['state'],
 
-                    'late_minutes' => $lateMinutes,
+                    'late_minutes' => max(0, $shiftStart->diffInMinutes($checkin, false)),
 
-                    'work_minutes' => $workMinutes,
+                    'work_minutes' => $checkin->diffInMinutes($checkout),
 
-                    'overtime_minutes' => $overtimeMinutes,
+                    'overtime_minutes' => max(0, $shiftEnd->diffInMinutes($checkout, false)),
 
                 ]);
 
@@ -286,13 +296,39 @@ class EnterpriseDemoSeeder extends Seeder
 
             /*
             |------------------------------------------------------------
-            | Leaves
+            | Leave Balance
             |------------------------------------------------------------
             */
 
             foreach ($users as $user) {
 
-                Leave::create([
+                LeaveBalance::firstOrCreate([
+                    'user_id' => $user->id,
+                    'leave_type_id' => $annual->id,
+                    'year' => now()->year,
+                ], [
+                    'total_days' => 12,
+                    'used_days' => 0,
+                    'remaining_days' => 12,
+                ]);
+
+            }
+
+            /*
+            |------------------------------------------------------------
+            | Leaves (Realistic Status)
+            |------------------------------------------------------------
+            */
+
+            foreach ($users as $user) {
+
+                $days = rand(1, 3);
+
+                $statusPool = ['approved', 'pending', 'rejected'];
+
+                $status = $statusPool[array_rand($statusPool)];
+
+                $leave = Leave::create([
 
                     'user_id' => $user->id,
 
@@ -302,17 +338,36 @@ class EnterpriseDemoSeeder extends Seeder
 
                     'end_date' => now()->subDays(rand(5, 9))->toDateString(),
 
-                    'days' => rand(1, 3),
+                    'days' => $days,
 
                     'reason' => 'Personal leave',
 
-                    'status' => 'approved',
+                    'status' => $status,
 
-                    'approved_by' => $users[3]->id,
+                    'approved_by' => $status === 'approved'
+                        ? $users[3]->id
+                        : null,
 
-                    'approved_at' => now(),
+                    'approved_at' => $status === 'approved'
+                        ? now()
+                        : null,
 
                 ]);
+
+                if ($status === 'approved') {
+
+                    $balance = LeaveBalance::where([
+                        'user_id' => $user->id,
+                        'leave_type_id' => $annual->id,
+                        'year' => now()->year,
+                    ])->first();
+
+                    $balance->update([
+                        'used_days' => $balance->used_days + $days,
+                        'remaining_days' => $balance->remaining_days - $days,
+                    ]);
+
+                }
 
             }
 

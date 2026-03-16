@@ -18,6 +18,10 @@ class Leave extends Model
         'approved_at',
     ];
 
+    protected $casts = [
+        'approval_history' => 'array',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -31,5 +35,10 @@ class Leave extends Model
     public function approver()
     {
         return $this->belongsTo(User::class, 'approved_by');
+    }
+
+    public function balance()
+    {
+        return $this->belongsTo(LeaveBalance::class);
     }
 }

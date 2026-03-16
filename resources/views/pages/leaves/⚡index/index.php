@@ -3,7 +3,7 @@
 use App\Models\Leave;
 use App\Models\LeaveType;
 use App\Models\User;
-use Illuminate\Support\Facades\Auth;
+use App\Services\LeaveApprovalService;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -176,11 +176,9 @@ new class extends Component
 
             $this->authorize('approve', Leave::class);
 
-            $leave->update([
-                'status' => 'approved',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
-            ]);
+            $service = new LeaveApprovalService;
+
+            $service->approve($leave);
 
             DB::commit();
 
@@ -194,6 +192,35 @@ new class extends Component
 
             DB::rollBack();
 
+            throw $e;
+        }
+    }
+
+    public function reject(int $id): void
+    {
+        DB::beginTransaction();
+
+        try {
+
+            $leave = Leave::findOrFail($id);
+
+            $this->authorize('approve', Leave::class);
+
+            $service = new LeaveApprovalService;
+
+            $service->reject($leave);
+
+            DB::commit();
+
+            $this->dispatch('alert', [
+                'title' => 'Success',
+                'message' => 'Leave rejected successfully',
+                'variant' => 'success',
+            ]);
+
+        } catch (Throwable $e) {
+
+            DB::rollBack();
             throw $e;
         }
     }

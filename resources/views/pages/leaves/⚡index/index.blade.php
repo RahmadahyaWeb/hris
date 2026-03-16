@@ -107,6 +107,11 @@
                                         <flux:menu.item icon="check" wire:click="approve({{ $leave->id }})">
                                             Approve
                                         </flux:menu.item>
+
+                                        <flux:menu.item icon="x-mark" variant="danger"
+                                            wire:click="reject({{ $leave->id }})">
+                                            Reject
+                                        </flux:menu.item>
                                     @endcan
 
                                     @can('delete', $leave)

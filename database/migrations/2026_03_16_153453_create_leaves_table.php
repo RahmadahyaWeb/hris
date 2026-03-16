@@ -28,6 +28,10 @@ return new class extends Migration
 
             $table->text('reason')->nullable();
 
+            $table->unsignedTinyInteger('approval_level')->default(1);
+            $table->unsignedTinyInteger('current_level')->default(1);
+            $table->json('approval_history')->nullable();
+
             $table->string('status')->default('pending');
 
             $table->foreignId('approved_by')
