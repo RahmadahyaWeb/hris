@@ -1,8 +1,11 @@
 <?php
 
+namespace App\Services;
+
 use App\Models\Attendance;
 use App\Models\EmployeeSchedule;
 use App\Models\User;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceService

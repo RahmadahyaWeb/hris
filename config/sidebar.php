@@ -73,7 +73,7 @@ return [
     ],
 
     [
-        'label' => 'Presence Settings',
+        'label' => 'Attendance Settings',
         'icon' => 'cog-8-tooth',
         'children' => [
 
@@ -100,6 +100,27 @@ return [
                 'icon' => 'clock',
                 'route' => 'employee-schedules.index',
                 'permission' => 'employee_schedules.view',
+            ],
+
+        ],
+    ],
+
+    [
+        'label' => 'Attendances',
+        'icon' => 'cog-8-tooth',
+        'children' => [
+
+            [
+                'label' => 'Attendances Monitoring',
+                'icon' => 'computer-desktop',
+                'route' => 'attendances-monitoring.index',
+                'permission' => '',
+            ],
+            [
+                'label' => 'Attendances',
+                'icon' => 'bolt',
+                'route' => 'attendances.index',
+                'permission' => '',
             ],
 
         ],

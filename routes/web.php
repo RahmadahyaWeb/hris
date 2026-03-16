@@ -19,11 +19,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('users', 'pages::users.index')->name('users.index');
     Route::livewire('user-devices', 'pages::user-devices.index')->name('user-devices.index');
 
-    // PRESENCE
+    // ATTENDANCE SETTING
     Route::livewire('shifts', 'pages::shifts.index')->name('shifts.index');
     Route::livewire('work-calendars', 'pages::work-calendars.index')->name('work-calendars.index');
     Route::livewire('calendars', 'pages::calendars.index')->name('calendars.index');
     Route::livewire('employee-schedules', 'pages::employee-schedules.index')->name('employee-schedules.index');
+
+    // ATTENDANCE
+    Route::livewire('attendances-monitoring', 'pages::attendances.monitoring.index')->name('attendances-monitoring.index');
+    Route::livewire('attendances', 'pages::attendances.index')->name('attendances.index');
 
 });
 

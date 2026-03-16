@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Services;
+
 use App\Models\Attendance;
 use App\Models\EmployeeSchedule;
 use App\Models\User;
@@ -8,27 +10,27 @@ use App\Models\WorkCalendar;
 
 class AttendanceValidationService
 {
-    public function validate(User $user)
+    public function validate(User $user, string $uuid, float $lat, float $long, string $mode): array
     {
         return [
 
-            'device' => $this->validateDevice($user),
+            'device' => $this->validateDevice($user, $uuid),
 
             'schedule' => $this->validateSchedule($user),
 
             'holiday' => $this->validateHoliday(),
 
-            'location' => $this->validateLocation($user),
+            'location' => $this->validateLocation($user, $lat, $long),
 
-            'duplicate' => $this->validateDuplicate($user),
+            'duplicate' => $mode === 'checkin'
+                ? $this->validateCheckin($user)
+                : $this->validateCheckout($user),
 
         ];
     }
 
-    private function validateDevice(User $user)
+    private function validateDevice(User $user, string $uuid): bool
     {
-        $uuid = request('device_uuid');
-
         return UserDevice::where([
             'user_id' => $user->id,
             'device_uuid' => $uuid,
@@ -36,7 +38,7 @@ class AttendanceValidationService
         ])->exists();
     }
 
-    private function validateSchedule(User $user)
+    private function validateSchedule(User $user): bool
     {
         return EmployeeSchedule::where([
             'user_id' => $user->id,
@@ -44,7 +46,7 @@ class AttendanceValidationService
         ])->exists();
     }
 
-    private function validateHoliday()
+    private function validateHoliday(): bool
     {
         $calendar = WorkCalendar::whereDate('date', today())->first();
 
@@ -55,21 +57,30 @@ class AttendanceValidationService
         return ! $calendar->is_holiday;
     }
 
-    private function validateLocation(User $user)
+    private function validateLocation(User $user, float $lat, float $long): bool
     {
         $branch = $user->branch;
 
+        logger()->info('Location validation', [
+            'user_lat' => $lat,
+            'user_lng' => $long,
+            'branch_lat' => $branch->latitude,
+            'branch_lng' => $branch->longitude,
+        ]);
+
         $distance = $this->distance(
-            request('latitude'),
-            request('longitude'),
+            $lat,
+            $long,
             $branch->latitude,
             $branch->longitude
         );
 
+        // dd($distance);
+
         return $distance <= $branch->radius;
     }
 
-    private function distance($lat1, $lon1, $lat2, $lon2)
+    private function distance(float $lat1, float $lon1, float $lat2, float $lon2): float
     {
         $earth = 6371000;
 
@@ -85,11 +96,33 @@ class AttendanceValidationService
         return $earth * $c;
     }
 
-    private function validateDuplicate(User $user)
+    private function validateCheckin(User $user): bool
     {
         return ! Attendance::where([
             'user_id' => $user->id,
             'date' => today(),
         ])->exists();
+    }
+
+    private function validateCheckout(User $user): bool
+    {
+        $attendance = Attendance::where([
+            'user_id' => $user->id,
+            'date' => today(),
+        ])->first();
+
+        if (! $attendance) {
+            return false;
+        }
+
+        if (! $attendance->checkin_at) {
+            return false;
+        }
+
+        if ($attendance->checkout_at) {
+            return false;
+        }
+
+        return true;
     }
 }

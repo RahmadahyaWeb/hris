@@ -13,7 +13,7 @@
 <link href="https://fonts.bunny.net/css?family=instrument-sans:400,500,600" rel="stylesheet" />
 
 <style>
-    #map {
+    #attendance-map {
         position: relative;
         z-index: 0;
     }
