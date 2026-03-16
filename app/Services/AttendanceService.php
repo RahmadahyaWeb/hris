@@ -4,49 +4,68 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\EmployeeSchedule;
-use App\Models\User;
 use Exception;
 use Illuminate\Support\Facades\DB;
 
 class AttendanceService
 {
-    public function checkin(User $user)
+    public function checkin($user): Attendance
     {
         DB::beginTransaction();
 
         try {
 
-            $schedule = EmployeeSchedule::where([
+            $schedule = EmployeeSchedule::with('shift')
+                ->where('user_id', $user->id)
+                ->whereDate('date', today())
+                ->first();
+
+            if (! $schedule) {
+                throw new Exception('No work schedule found for today.');
+            }
+
+            $existing = Attendance::where([
                 'user_id' => $user->id,
                 'date' => today(),
-            ])->firstOrFail();
+            ])->first();
 
-            $shift = $schedule->shift;
+            if ($existing && $existing->checkin_at) {
+                throw new Exception('You have already checked in today.');
+            }
 
-            $late = now()->diffInMinutes(
-                now()->copy()->setTimeFromTimeString($shift->start_time),
-                false
-            );
-
-            Attendance::create([
+            $attendance = Attendance::create([
                 'user_id' => $user->id,
                 'date' => today(),
                 'checkin_at' => now(),
-                'checkin_latitude' => request('latitude'),
-                'checkin_longitude' => request('longitude'),
-                'late_minutes' => max($late, 0),
+            ]);
+
+            /**
+             * Hitung state awal (late / on_time)
+             */
+            $stateService = new AttendanceStateService;
+
+            $result = $stateService->resolve(
+                $attendance->fresh(),
+                $schedule
+            );
+
+            $attendance->update([
+                'state' => $result['state'],
+                'late_minutes' => $result['late_minutes'],
             ]);
 
             DB::commit();
 
-        } catch (Exception $e) {
+            return $attendance;
+
+        } catch (\Throwable $e) {
 
             DB::rollBack();
             throw $e;
         }
     }
 
-    public function checkout(User $user)
+    public function checkout($user): Attendance
     {
         DB::beginTransaction();
 
@@ -57,31 +76,45 @@ class AttendanceService
                 'date' => today(),
             ])->firstOrFail();
 
-            $schedule = EmployeeSchedule::where([
-                'user_id' => $user->id,
-                'date' => today(),
-            ])->first();
+            if (! $attendance->checkin_at) {
+                throw new Exception('Check-in record not found.');
+            }
 
-            $shift = $schedule->shift;
-
-            $workMinutes = $attendance->checkin_at->diffInMinutes(now());
-
-            $overtime = now()->diffInMinutes(
-                now()->copy()->setTimeFromTimeString($shift->end_time),
-                false
-            );
+            if ($attendance->checkout_at) {
+                throw new Exception('You have already checked out today.');
+            }
 
             $attendance->update([
                 'checkout_at' => now(),
-                'checkout_latitude' => request('latitude'),
-                'checkout_longitude' => request('longitude'),
-                'work_minutes' => $workMinutes,
-                'overtime_minutes' => max($overtime, 0),
             ]);
+
+            $schedule = EmployeeSchedule::with('shift')
+                ->where('user_id', $user->id)
+                ->whereDate('date', today())
+                ->first();
+
+            if ($schedule) {
+
+                $stateService = new AttendanceStateService;
+
+                $result = $stateService->resolve(
+                    $attendance->fresh(),
+                    $schedule
+                );
+
+                $attendance->update([
+                    'state' => $result['state'],
+                    'late_minutes' => $result['late_minutes'],
+                    'work_minutes' => $result['work_minutes'],
+                    'overtime_minutes' => $result['overtime_minutes'],
+                ]);
+            }
 
             DB::commit();
 
-        } catch (Exception $e) {
+            return $attendance;
+
+        } catch (\Throwable $e) {
 
             DB::rollBack();
             throw $e;

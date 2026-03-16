@@ -3,6 +3,8 @@
 use App\Models\Attendance;
 use App\Models\EmployeeSchedule;
 use App\Services\AttendanceService;
+use App\Services\AttendanceStateService;
+use App\Services\AttendanceTimelineService;
 use App\Services\AttendanceValidationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -36,6 +38,10 @@ new class extends Component
 
     public string $countdown = '';
 
+    public array $timeline = [];
+
+    public ?string $attendanceState = null;
+
     public function mount(): void
     {
         $user = Auth::user();
@@ -46,7 +52,10 @@ new class extends Component
         $this->officeLng = $branch->longitude;
         $this->officeRadius = $branch->radius;
 
-        $schedule = EmployeeSchedule::with('shift')->where('user_id', $user->id)->whereDate('date', today())->first();
+        $schedule = EmployeeSchedule::with('shift')
+            ->where('user_id', $user->id)
+            ->whereDate('date', today())
+            ->first();
 
         if ($schedule) {
             $this->shiftStart = $schedule->shift->start_time;
@@ -59,13 +68,30 @@ new class extends Component
         ])->first();
 
         if ($attendance) {
+
             $this->todayAttendance = [
                 'checkin' => $attendance->checkin_at,
                 'checkout' => $attendance->checkout_at,
             ];
 
             $this->checkedIn = $attendance->checkin_at && ! $attendance->checkout_at;
+
+            if ($schedule) {
+
+                $stateService = new AttendanceStateService;
+
+                $state = $stateService->resolve(
+                    $attendance,
+                    $schedule
+                );
+
+                $this->attendanceState = $state['state'];
+            }
         }
+
+        $timelineService = new AttendanceTimelineService;
+
+        $this->timeline = $timelineService->today($user);
     }
 
     public function setDevice(string $uuid): void
@@ -76,7 +102,50 @@ new class extends Component
 
         $validator = new AttendanceValidationService;
 
-        $this->validation = $validator->validate(Auth::user(), $this->device_uuid, $this->latitude ?? 0, $this->longitude ?? 0, $mode);
+        $this->validation = $validator->validate(
+            Auth::user(),
+            $this->device_uuid,
+            $this->latitude ?? 0,
+            $this->longitude ?? 0,
+            $mode
+        );
+    }
+
+    public function updateCountdown(): void
+    {
+        if ($this->todayAttendance['checkout'] ?? false) {
+            $this->countdown = 'Shift completed';
+
+            return;
+        }
+
+        if (! $this->shiftStart || ! $this->shiftEnd) {
+            $this->countdown = '-';
+
+            return;
+        }
+
+        $now = now();
+
+        $start = today()->setTimeFromTimeString($this->shiftStart);
+        $end = today()->setTimeFromTimeString($this->shiftEnd);
+
+        if ($now->lt($start)) {
+
+            $diff = $now->diff($start);
+
+            $this->countdown = $diff->format('%Hh %Im to check-in');
+
+        } elseif ($now->between($start, $end)) {
+
+            $diff = $now->diff($end);
+
+            $this->countdown = $diff->format('%Hh %Im to checkout');
+
+        } else {
+
+            $this->countdown = 'Shift completed';
+        }
     }
 
     public function attend(): void
@@ -84,15 +153,25 @@ new class extends Component
         DB::beginTransaction();
 
         try {
+
             $mode = $this->checkedIn ? 'checkout' : 'checkin';
 
             $validator = new AttendanceValidationService;
 
-            $this->validation = $validator->validate(Auth::user(), $this->device_uuid, $this->latitude, $this->longitude, $mode);
+            $this->validation = $validator->validate(
+                Auth::user(),
+                $this->device_uuid,
+                $this->latitude,
+                $this->longitude,
+                $mode
+            );
 
             foreach ($this->validation as $key => $value) {
+
                 if ($value === false) {
+
                     switch ($key) {
+
                         case 'device':
                             throw new Exception('This device is not authorized.');
                         case 'schedule':
@@ -102,6 +181,7 @@ new class extends Component
                         case 'location':
                             throw new Exception('You are outside the allowed branch radius.');
                         case 'duplicate':
+
                             if ($mode === 'checkin') {
                                 throw new Exception('You have already checked in today.');
                             }
@@ -120,12 +200,15 @@ new class extends Component
             $service = new AttendanceService;
 
             if ($mode === 'checkin') {
+
                 $service->checkin(Auth::user());
 
                 $this->checkedIn = true;
 
                 $message = 'Check-in successful';
+
             } else {
+
                 $service->checkout(Auth::user());
 
                 $this->checkedIn = false;
@@ -140,7 +223,11 @@ new class extends Component
                 'message' => $message,
                 'variant' => 'success',
             ]);
+
+            $this->mount();
+
         } catch (Throwable $e) {
+
             DB::rollBack();
 
             $this->dispatch('alert', [

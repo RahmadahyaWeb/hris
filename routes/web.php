@@ -26,8 +26,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::livewire('employee-schedules', 'pages::employee-schedules.index')->name('employee-schedules.index');
 
     // ATTENDANCE
-    Route::livewire('attendances-monitoring', 'pages::attendances.monitoring.index')->name('attendances-monitoring.index');
     Route::livewire('attendances', 'pages::attendances.index')->name('attendances.index');
+    Route::livewire('attendances-monitoring', 'pages::attendances.monitoring.index')->name('attendances-monitoring.index');
+    Route::livewire('attendances-rules', 'pages::attendances.rules.index')->name('attendances-rules.index');
+
+    // REPORT
+    Route::livewire('reports/period', 'pages::reports.period.index')->name('reports.periode.index');
 
 });
 

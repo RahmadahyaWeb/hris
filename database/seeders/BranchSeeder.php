@@ -18,21 +18,9 @@ class BranchSeeder extends Seeder
             $branches = [
                 [
                     'name' => 'Head Office',
-                    'latitude' => -6.2000000,
-                    'longitude' => 106.8166667,
-                    'radius' => 200,
-                ],
-                [
-                    'name' => 'Branch Bandung',
-                    'latitude' => -6.9174639,
-                    'longitude' => 107.6191228,
-                    'radius' => 200,
-                ],
-                [
-                    'name' => 'Branch Surabaya',
-                    'latitude' => -7.2574719,
-                    'longitude' => 112.7520883,
-                    'radius' => 200,
+                    'latitude' => -3.3207340048727865,
+                    'longitude' => 114.58132319533456,
+                    'radius' => 100,
                 ],
             ];
 

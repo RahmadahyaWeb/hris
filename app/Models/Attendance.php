@@ -18,7 +18,7 @@ class Attendance extends Model
         'late_minutes',
         'work_minutes',
         'overtime_minutes',
-        'status',
+        'state',
     ];
 
     protected $casts = [

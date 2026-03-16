@@ -34,7 +34,7 @@ return new class extends Migration
 
             $table->integer('overtime_minutes')->default(0);
 
-            $table->string('status')->default('present');
+            $table->string('state')->default('present');
 
             $table->timestamps();
 

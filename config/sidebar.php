@@ -101,6 +101,12 @@ return [
                 'route' => 'employee-schedules.index',
                 'permission' => 'employee_schedules.view',
             ],
+            [
+                'label' => 'Rules',
+                'icon' => 'cog-8-tooth',
+                'route' => 'attendances-rules.index',
+                'permission' => 'attendance_rules.view',
+            ],
 
         ],
     ],
@@ -120,6 +126,21 @@ return [
                 'label' => 'Attendances',
                 'icon' => 'bolt',
                 'route' => 'attendances.index',
+                'permission' => '',
+            ],
+
+        ],
+    ],
+
+    [
+        'label' => 'Reports',
+        'icon' => 'cog-8-tooth',
+        'children' => [
+
+            [
+                'label' => 'Period',
+                'icon' => 'document',
+                'route' => 'reports.periode.index',
                 'permission' => '',
             ],
 

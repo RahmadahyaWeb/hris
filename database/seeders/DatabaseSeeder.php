@@ -17,7 +17,11 @@ class DatabaseSeeder extends Seeder
             DivisionSeeder::class,
             PositionSeeder::class,
             RolePermissionSeeder::class,
+            WorkCalendarSeeder::class,
             ShiftSeeder::class,
+            AttendanceRuleSeeder::class,
+            EmployeeScheduleSeeder::class,
+            AttendanceSeeder::class,
         ]);
     }
 }

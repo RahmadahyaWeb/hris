@@ -1,12 +1,69 @@
 <div class="space-y-6 pb-24">
 
-    <div class="space-y-1">
+    {{-- Header --}}
+    <div>
         <flux:heading>Attendance</flux:heading>
         <flux:text class="text-sm text-zinc-500">
-            Record your daily attendance using your current GPS location.
+            Record your daily attendance using your GPS location.
         </flux:text>
     </div>
 
+    {{-- Attendance Status --}}
+    <flux:card>
+
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+
+            <div class="flex items-center gap-2">
+                <flux:icon name="shield-check" class="w-4 h-4 text-green-500" />
+                <span class="text-sm font-medium">
+                    Attendance Status
+                </span>
+            </div>
+
+            @php
+                $invalidReason = null;
+
+                foreach ($validation as $key => $value) {
+                    if ($value === false) {
+                        $invalidReason = match ($key) {
+                            'device' => 'Unauthorized device',
+                            'schedule' => 'No schedule today',
+                            'holiday' => 'Today is a holiday',
+                            'location' => 'Outside branch radius',
+                            'duplicate' => 'Attendance already completed',
+                            default => 'Validation failed',
+                        };
+
+                        break;
+                    }
+                }
+            @endphp
+
+            @if ($invalidReason)
+                <flux:badge color="red">
+                    {{ $invalidReason }}
+                </flux:badge>
+            @else
+                <flux:badge color="green">
+                    Ready
+                </flux:badge>
+            @endif
+
+        </div>
+
+        <flux:text class="mt-2 text-xs text-zinc-500">
+
+            @if ($invalidReason)
+                Please resolve the issue above before performing attendance.
+            @else
+                All validation checks passed. You can proceed.
+            @endif
+
+        </flux:text>
+
+    </flux:card>
+
+    {{-- Shift Information --}}
     <flux:card>
 
         <div class="grid grid-cols-2 gap-4">
@@ -29,7 +86,7 @@
                     Next Event
                 </flux:text>
 
-                <flux:heading size="sm">
+                <flux:heading size="sm" wire:poll="updateCountdown">
                     {{ $countdown }}
                 </flux:heading>
 
@@ -39,6 +96,7 @@
 
     </flux:card>
 
+    {{-- Map --}}
     <flux:card>
 
         <div id="attendance-map" class="h-72 rounded-xl" data-office-lat="{{ $officeLat }}"
@@ -70,93 +128,67 @@
 
     </flux:card>
 
-    <flux:card>
-
-        <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-
-            <div class="flex items-center gap-2">
-
-                <flux:icon name="shield-check" class="w-4 h-4 text-green-500" />
-
-                <span class="text-sm font-medium">
-                    Attendance Status
-                </span>
-
-            </div>
-
-            @php
-                $invalidReason = null;
-
-                foreach ($validation as $key => $value) {
-                    if ($value === false) {
-                        switch ($key) {
-                            case 'device':
-                                $invalidReason = 'Unauthorized device';
-                                break;
-
-                            case 'schedule':
-                                $invalidReason = 'No work schedule today';
-                                break;
-
-                            case 'holiday':
-                                $invalidReason = 'Today is a holiday';
-                                break;
-
-                            case 'location':
-                                $invalidReason = 'Outside allowed radius';
-                                break;
-
-                            case 'duplicate':
-                                $invalidReason = 'Attendance already completed';
-                                break;
-
-                            default:
-                                $invalidReason = 'Validation failed';
-                                break;
-                        }
-
-                        break;
-                    }
-                }
-            @endphp
-
-            <div class="self-start sm:self-auto">
-
-                @if ($invalidReason)
-                    <flux:badge color="red">
-                        {{ $invalidReason }}
-                    </flux:badge>
-                @else
-                    <flux:badge color="green">
-                        Ready
-                    </flux:badge>
-                @endif
-
-            </div>
-
-        </div>
-
-        <flux:text class="mt-2 text-xs text-zinc-500 leading-relaxed">
-
-            @if ($invalidReason)
-                Please resolve the issue above before performing attendance.
-            @else
-                All validation checks passed. You can proceed with attendance.
-            @endif
-
-        </flux:text>
-
-    </flux:card>
-
+    {{-- Timeline --}}
     <flux:card>
 
         <flux:heading size="sm">
-            Today's Activity
+            Timeline
         </flux:heading>
+
+        <div class="mt-4 space-y-3">
+
+            @forelse($timeline as $item)
+                <div class="flex justify-between text-sm">
+
+                    <span class="text-zinc-500">
+                        {{ $item['label'] }}
+                    </span>
+
+                    <span class="font-medium">
+                        {{ $item['time'] }}
+                    </span>
+
+                </div>
+
+            @empty
+
+                <flux:text class="text-sm text-zinc-500">
+                    No timeline today
+                </flux:text>
+            @endforelse
+
+        </div>
+
+    </flux:card>
+
+    {{-- Today Activity --}}
+    <flux:card>
+
+        <div class="flex items-center justify-between">
+
+            <flux:heading size="sm">
+                Today's Activity
+            </flux:heading>
+
+            @if ($attendanceState)
+                <flux:badge
+                    color="{{ match ($attendanceState) {
+                        'late' => 'yellow',
+                        'early_checkout' => 'orange',
+                        'overtime' => 'purple',
+                        default => 'green',
+                    } }}">
+
+                    {{ ucfirst(str_replace('_', ' ', $attendanceState)) }}
+
+                </flux:badge>
+            @endif
+
+        </div>
 
         <div class="mt-4 space-y-3 text-sm">
 
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between">
 
                 <span class="text-zinc-500">
                     Check-in
@@ -168,7 +200,7 @@
 
             </div>
 
-            <div class="flex items-center justify-between">
+            <div class="flex justify-between">
 
                 <span class="text-zinc-500">
                     Check-out
@@ -184,6 +216,7 @@
 
     </flux:card>
 
+    {{-- Action Button --}}
     <div class="sticky bottom-10 bg-white pt-4">
 
         <flux:button class="w-full h-12 text-base" icon="{{ $checkedIn ? 'arrow-right-circle' : 'map-pin' }}"
