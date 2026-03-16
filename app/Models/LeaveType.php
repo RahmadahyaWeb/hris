@@ -16,4 +16,10 @@ class LeaveType extends Model
     {
         return $this->hasMany(Leave::class);
     }
+
+    public function approvalSteps()
+    {
+        return $this->hasMany(ApprovalStep::class)
+            ->orderBy('step_order');
+    }
 }

@@ -1,0 +1,43 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('approval_histories', function (Blueprint $table) {
+
+            $table->id();
+
+            $table->foreignId('leave_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
+            $table->unsignedTinyInteger('step');
+
+            $table->foreignId('approved_by')
+                ->nullable()
+                ->constrained('users')
+                ->nullOnDelete();
+
+            $table->enum('action', [
+                'approved',
+                'rejected',
+            ]);
+
+            $table->text('note')->nullable();
+
+            $table->timestamp('acted_at');
+
+            $table->timestamps();
+        });
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('approval_histories');
+    }
+};

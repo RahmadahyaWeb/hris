@@ -112,6 +112,27 @@ return [
     ],
 
     [
+        'label' => 'Leaves',
+        'icon' => 'cog-8-tooth',
+        'children' => [
+
+            [
+                'label' => 'Leaves',
+                'icon' => 'document',
+                'route' => 'leaves.index',
+                'permission' => 'leaves.view',
+            ],
+            [
+                'label' => 'Leaves Monitoring',
+                'icon' => 'computer-desktop',
+                'route' => 'leaves.monitoring.index',
+                'permission' => 'leaves.view',
+            ],
+
+        ],
+    ],
+
+    [
         'label' => 'Attendances',
         'icon' => 'cog-8-tooth',
         'children' => [
@@ -121,12 +142,6 @@ return [
                 'icon' => 'computer-desktop',
                 'route' => 'attendances-monitoring.index',
                 'permission' => '',
-            ],
-            [
-                'label' => 'Leaves',
-                'icon' => 'document',
-                'route' => 'leaves.index',
-                'permission' => 'leaves.view',
             ],
             [
                 'label' => 'Attendances',

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\ApprovalStep;
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Division;
@@ -14,9 +15,9 @@ use App\Models\Shift;
 use App\Models\User;
 use App\Models\WorkCalendar;
 use App\Services\AttendanceStateService;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
@@ -214,7 +215,7 @@ class EnterpriseDemoSeeder extends Seeder
 
             /*
             |------------------------------------------------------------
-            | Attendance (Realistic Data)
+            | Attendance
             |------------------------------------------------------------
             */
 
@@ -222,13 +223,11 @@ class EnterpriseDemoSeeder extends Seeder
 
             foreach ($schedules as $schedule) {
 
-                $rand = rand(1, 100);
-
-                if ($rand <= 5) {
-                    continue; // absent
+                if (rand(1, 100) <= 5) {
+                    continue;
                 }
 
-                $date = Carbon::parse($schedule->date)->startOfDay();
+                $date = Carbon::parse($schedule->date);
 
                 $shiftStart = $date->copy()
                     ->setTimeFromTimeString($schedule->shift->start_time);
@@ -236,29 +235,8 @@ class EnterpriseDemoSeeder extends Seeder
                 $shiftEnd = $date->copy()
                     ->setTimeFromTimeString($schedule->shift->end_time);
 
-                if ($rand <= 70) {
-
-                    $checkin = $shiftStart->copy()->addMinutes(rand(-5, 5));
-
-                } elseif ($rand <= 85) {
-
-                    $checkin = $shiftStart->copy()->addMinutes(rand(10, 40));
-
-                } else {
-
-                    $checkin = $shiftStart->copy()->addMinutes(rand(-5, 5));
-
-                }
-
-                if ($rand >= 90) {
-
-                    $checkout = $shiftEnd->copy()->addMinutes(rand(30, 90));
-
-                } else {
-
-                    $checkout = $shiftEnd->copy()->addMinutes(rand(-10, 10));
-
-                }
+                $checkin = $shiftStart->copy()->addMinutes(rand(-5, 40));
+                $checkout = $shiftEnd->copy()->addMinutes(rand(-10, 90));
 
                 $attendance = Attendance::create([
                     'user_id' => $schedule->user_id,
@@ -272,17 +250,11 @@ class EnterpriseDemoSeeder extends Seeder
                 $state = $stateService->resolve($attendance, $schedule);
 
                 $attendance->update([
-
                     'state' => $state['state'],
-
                     'late_minutes' => max(0, $shiftStart->diffInMinutes($checkin, false)),
-
                     'work_minutes' => $checkin->diffInMinutes($checkout),
-
                     'overtime_minutes' => max(0, $shiftEnd->diffInMinutes($checkout, false)),
-
                 ]);
-
             }
 
             /*
@@ -293,6 +265,26 @@ class EnterpriseDemoSeeder extends Seeder
 
             $annual = LeaveType::firstOrCreate(['name' => 'Annual Leave']);
             $sick = LeaveType::firstOrCreate(['name' => 'Sick Leave']);
+
+            /*
+            |------------------------------------------------------------
+            | Approval Steps
+            |------------------------------------------------------------
+            */
+
+            ApprovalStep::firstOrCreate([
+                'leave_type_id' => $annual->id,
+                'step_order' => 1,
+            ], [
+                'approver_type' => 'manager',
+            ]);
+
+            ApprovalStep::firstOrCreate([
+                'leave_type_id' => $annual->id,
+                'step_order' => 2,
+            ], [
+                'approver_type' => 'hr',
+            ]);
 
             /*
             |------------------------------------------------------------
@@ -311,64 +303,6 @@ class EnterpriseDemoSeeder extends Seeder
                     'used_days' => 0,
                     'remaining_days' => 12,
                 ]);
-
-            }
-
-            /*
-            |------------------------------------------------------------
-            | Leaves (Realistic Status)
-            |------------------------------------------------------------
-            */
-
-            foreach ($users as $user) {
-
-                $days = rand(1, 3);
-
-                $statusPool = ['approved', 'pending', 'rejected'];
-
-                $status = $statusPool[array_rand($statusPool)];
-
-                $leave = Leave::create([
-
-                    'user_id' => $user->id,
-
-                    'leave_type_id' => $annual->id,
-
-                    'start_date' => now()->subDays(rand(10, 20))->toDateString(),
-
-                    'end_date' => now()->subDays(rand(5, 9))->toDateString(),
-
-                    'days' => $days,
-
-                    'reason' => 'Personal leave',
-
-                    'status' => $status,
-
-                    'approved_by' => $status === 'approved'
-                        ? $users[3]->id
-                        : null,
-
-                    'approved_at' => $status === 'approved'
-                        ? now()
-                        : null,
-
-                ]);
-
-                if ($status === 'approved') {
-
-                    $balance = LeaveBalance::where([
-                        'user_id' => $user->id,
-                        'leave_type_id' => $annual->id,
-                        'year' => now()->year,
-                    ])->first();
-
-                    $balance->update([
-                        'used_days' => $balance->used_days + $days,
-                        'remaining_days' => $balance->remaining_days - $days,
-                    ]);
-
-                }
-
             }
 
             DB::commit();

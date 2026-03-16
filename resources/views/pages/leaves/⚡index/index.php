@@ -33,12 +33,18 @@ new class extends Component
 
     public ?int $deleteId = null;
 
+    public ?Leave $selectedLeave = null;
+
     #[Computed]
     public function leaves()
     {
         $this->authorize('viewAny', Leave::class);
 
-        return Leave::with(['user', 'leaveType', 'approver'])
+        return Leave::with([
+            'user.position.division',
+            'leaveType.approvalSteps',
+            'histories.approver',
+        ])
             ->latest()
             ->paginate($this->perPage);
     }
@@ -78,7 +84,6 @@ new class extends Component
             'end_date',
             'days',
             'reason',
-            'status',
         ]);
 
         $this->status = 'pending';
@@ -98,8 +103,7 @@ new class extends Component
         $this->start_date = $leave->start_date;
         $this->end_date = $leave->end_date;
         $this->days = $leave->days;
-        $this->reason = $leave->reason ?? '';
-        $this->status = $leave->status;
+        $this->reason = $leave->reason;
 
         $this->modal('leave-form')->show();
     }
@@ -132,6 +136,8 @@ new class extends Component
                 Leave::create([
                     ...$validated,
                     'reason' => $this->reason,
+                    'status' => 'pending',
+                    'current_level' => 0,
                 ]);
 
                 $message = 'Leave created successfully';
@@ -155,14 +161,17 @@ new class extends Component
                 'end_date',
                 'days',
                 'reason',
-                'status',
             ]);
 
         } catch (Throwable $e) {
 
             DB::rollBack();
 
-            throw $e;
+            $this->dispatch('alert', [
+                'title' => 'Error',
+                'message' => $e->getMessage(),
+                'variant' => 'danger',
+            ]);
         }
     }
 
@@ -172,9 +181,13 @@ new class extends Component
 
         try {
 
-            $leave = Leave::findOrFail($id);
+            $leave = Leave::with('leaveType.approvalSteps')->findOrFail($id);
 
             $this->authorize('approve', Leave::class);
+
+            if ($leave->current_level >= $leave->leaveType->approvalSteps->count()) {
+                throw new Exception('Approval already completed.');
+            }
 
             $service = new LeaveApprovalService;
 
@@ -192,7 +205,11 @@ new class extends Component
 
             DB::rollBack();
 
-            throw $e;
+            $this->dispatch('alert', [
+                'title' => 'Success',
+                'message' => 'Leave approved successfully',
+                'variant' => 'success',
+            ]);
         }
     }
 
@@ -221,8 +238,20 @@ new class extends Component
         } catch (Throwable $e) {
 
             DB::rollBack();
-            throw $e;
+
+            $this->dispatch('alert', [
+                'title' => 'Error',
+                'message' => $e->getMessage(),
+                'variant' => 'danger',
+            ]);
         }
+    }
+
+    public function timeline(int $id): void
+    {
+        $this->selectedLeave = Leave::with('histories.approver')->findOrFail($id);
+
+        $this->modal('leave-timeline')->show();
     }
 
     public function confirmDelete(int $id): void
@@ -258,13 +287,15 @@ new class extends Component
                 'variant' => 'success',
             ]);
 
-            $this->deleteId = null;
-
         } catch (Throwable $e) {
 
             DB::rollBack();
 
-            throw $e;
+            $this->dispatch('alert', [
+                'title' => 'Error',
+                'message' => $e->getMessage(),
+                'variant' => 'danger',
+            ]);
         }
     }
 };

@@ -16,6 +16,7 @@ class Leave extends Model
         'status',
         'approved_by',
         'approved_at',
+        'current_level',
     ];
 
     protected $casts = [
@@ -40,5 +41,10 @@ class Leave extends Model
     public function balance()
     {
         return $this->belongsTo(LeaveBalance::class);
+    }
+
+    public function histories()
+    {
+        return $this->hasMany(ApprovalHistory::class);
     }
 }

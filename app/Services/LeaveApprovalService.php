@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\ApprovalHistory;
+use App\Models\ApprovalStep;
 use App\Models\Leave;
 use App\Models\LeaveBalance;
 use Exception;
@@ -10,41 +12,57 @@ use Illuminate\Support\Facades\DB;
 
 class LeaveApprovalService
 {
-    public function approve(Leave $leave): void
+    public function approve(Leave $leave, ?int $approverId = null): void
     {
         DB::beginTransaction();
 
         try {
 
             if ($leave->status !== 'pending') {
-                throw new Exception('Leave request already processed.');
+                throw new Exception('Leave request already finalized.');
             }
 
-            $history = $leave->approval_history ?? [];
+            $steps = ApprovalStep::where('leave_type_id', $leave->leave_type_id)
+                ->orderBy('step_order')
+                ->get();
 
-            $history[] = [
-                'approved_by' => Auth::id(),
-                'level' => $leave->current_level,
-                'approved_at' => now(),
-            ];
+            if ($steps->isEmpty()) {
+                throw new Exception('Approval flow not configured.');
+            }
 
-            if ($leave->current_level < $leave->approval_level) {
+            $currentStep = $leave->current_level;
+
+            if ($currentStep >= $steps->count()) {
+                throw new Exception('Approval already completed.');
+            }
+
+            $approverId ??= Auth::id();
+
+            ApprovalHistory::create([
+                'leave_id' => $leave->id,
+                'step' => $currentStep + 1,
+                'approved_by' => $approverId,
+                'action' => 'approved',
+                'acted_at' => now(),
+            ]);
+
+            $nextLevel = $currentStep + 1;
+
+            if ($nextLevel >= $steps->count()) {
 
                 $leave->update([
-                    'current_level' => $leave->current_level + 1,
-                    'approval_history' => $history,
+                    'status' => 'approved',
+                    'current_level' => $steps->count(),
                 ]);
+
+                $this->deductBalance($leave);
 
             } else {
 
                 $leave->update([
-                    'status' => 'approved',
-                    'approved_by' => Auth::id(),
-                    'approved_at' => now(),
-                    'approval_history' => $history,
+                    'current_level' => $nextLevel,
                 ]);
 
-                $this->deductBalance($leave);
             }
 
             DB::commit();
@@ -56,29 +74,28 @@ class LeaveApprovalService
         }
     }
 
-    public function reject(Leave $leave): void
+    public function reject(Leave $leave, ?int $approverId = null): void
     {
         DB::beginTransaction();
 
         try {
 
             if ($leave->status !== 'pending') {
-                throw new Exception('Leave request already processed.');
+                throw new Exception('Leave request already finalized.');
             }
 
-            $history = $leave->approval_history ?? [];
+            $approverId ??= Auth::id();
 
-            $history[] = [
-                'rejected_by' => Auth::id(),
-                'level' => $leave->current_level,
-                'rejected_at' => now(),
-            ];
+            ApprovalHistory::create([
+                'leave_id' => $leave->id,
+                'step' => $leave->current_level + 1,
+                'approved_by' => $approverId,
+                'action' => 'rejected',
+                'acted_at' => now(),
+            ]);
 
             $leave->update([
                 'status' => 'rejected',
-                'approved_by' => Auth::id(),
-                'approved_at' => now(),
-                'approval_history' => $history,
             ]);
 
             DB::commit();
