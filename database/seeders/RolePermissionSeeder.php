@@ -79,6 +79,8 @@ class RolePermissionSeeder extends Seeder
                 'leaves.approve',
 
                 'attendances_monitoring.view',
+
+                'attendance_report.view',
             ];
 
             $employeePermission = [

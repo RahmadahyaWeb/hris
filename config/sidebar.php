@@ -84,7 +84,7 @@ return [
                 'label' => 'Attendance Report',
                 'icon' => 'document',
                 'route' => 'reports.attendance-report.index',
-                'permission' => '',
+                'permission' => 'attendance_report.view',
             ],
 
         ],
