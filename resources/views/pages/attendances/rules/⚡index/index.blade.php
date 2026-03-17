@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Attendance Rules</flux:heading>
+        <flux:heading size="lg">Attendance Rules</flux:heading>
         <flux:text class="mt-2">
             Configure system rules for lateness, overtime and early checkout.
         </flux:text>

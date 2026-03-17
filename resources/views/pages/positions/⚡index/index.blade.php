@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Position Management</flux:heading>
+        <flux:heading size="lg">Position Management</flux:heading>
         <flux:text class="mt-2">
             Manage job positions and assign them to divisions.
         </flux:text>

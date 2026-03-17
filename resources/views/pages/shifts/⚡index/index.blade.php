@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Shift Management</flux:heading>
+        <flux:heading size="lg">Shift Management</flux:heading>
         <flux:text class="mt-2">
             Manage working shifts including start time, end time, and overnight shifts.
         </flux:text>

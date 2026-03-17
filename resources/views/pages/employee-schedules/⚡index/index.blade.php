@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Employee Schedule</flux:heading>
+        <flux:heading size="lg">Employee Schedule</flux:heading>
         <flux:text class="mt-2">
             Manage employee schedules and generate monthly schedules per user.
         </flux:text>

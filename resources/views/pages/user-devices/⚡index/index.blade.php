@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Device Security Dashboard</flux:heading>
+        <flux:heading size="lg">Device Security Dashboard</flux:heading>
         <flux:text class="mt-2">
             Manage and monitor user devices. Approve, block, or revoke devices when necessary.
         </flux:text>

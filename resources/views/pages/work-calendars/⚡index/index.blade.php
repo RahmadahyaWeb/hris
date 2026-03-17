@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Work Calendar</flux:heading>
+        <flux:heading size="lg">Work Calendar</flux:heading>
         <flux:text class="mt-2">
             Manage working days, holidays, and generate yearly calendars.
         </flux:text>

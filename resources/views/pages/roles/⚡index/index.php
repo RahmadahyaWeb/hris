@@ -44,13 +44,21 @@ new class extends Component
     {
         $permissions = Permission::pluck('name')->toArray();
 
+        sort($permissions);
+
         $groups = [];
 
         foreach ($permissions as $permission) {
 
-            [$group,$action] = explode('.', $permission);
+            [$group, $action] = explode('.', $permission);
 
             $groups[$group][] = $permission;
+        }
+
+        ksort($groups);
+
+        foreach ($groups as &$items) {
+            sort($items);
         }
 
         return $groups;

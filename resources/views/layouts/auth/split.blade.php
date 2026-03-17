@@ -26,7 +26,7 @@
                 <blockquote class="space-y-2">
                     <flux:heading size="lg">&ldquo;{{ trim($message) }}&rdquo;</flux:heading>
                     <footer>
-                        <flux:heading>{{ trim($author) }}</flux:heading>
+                        <flux:heading size="lg">{{ trim($author) }}</flux:heading>
                     </footer>
                 </blockquote>
             </div>

@@ -30,29 +30,57 @@ new class extends Component
         return Branch::pluck('name', 'id');
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | SUMMARY (BASED ON SCHEDULE + ATTENDANCE)
+    |--------------------------------------------------------------------------
+    */
+
     #[Computed]
     public function summary()
     {
-        $attendance = Attendance::whereDate('date', $this->date);
-
-        if ($this->branch_id) {
-            $attendance->whereHas('user', fn ($q) => $q->where('branch_id', $this->branch_id));
-        }
-
-        $present = (clone $attendance)->count();
-
-        $late = (clone $attendance)->where('state', 'late')->count();
-
-        $overtime = (clone $attendance)->where('overtime_minutes', '>', 0)->count();
-
-        $scheduledUsers = EmployeeSchedule::whereDate('date', $this->date)
+        $schedules = EmployeeSchedule::with('user')
+            ->whereDate('date', $this->date)
             ->when(
                 $this->branch_id,
                 fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('branch_id', $this->branch_id))
             )
-            ->count();
+            ->get();
 
-        $absent = $scheduledUsers - $present;
+        $attendances = Attendance::whereDate('date', $this->date)
+            ->when(
+                $this->branch_id,
+                fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('branch_id', $this->branch_id))
+            )
+            ->get()
+            ->keyBy('user_id');
+
+        $present = 0;
+        $late = 0;
+        $overtime = 0;
+
+        foreach ($schedules as $schedule) {
+
+            $attendance = $attendances->get($schedule->user_id);
+
+            if (! $attendance) {
+                continue;
+            }
+
+            if ($attendance->checkin_at) {
+                $present++;
+            }
+
+            if (($attendance->late_minutes ?? 0) > 0) {
+                $late++;
+            }
+
+            if (($attendance->overtime_minutes ?? 0) > 0) {
+                $overtime++;
+            }
+        }
+
+        $absent = $schedules->count() - $present;
 
         return [
             'present' => $present,
@@ -61,6 +89,12 @@ new class extends Component
             'absent' => $absent < 0 ? 0 : $absent,
         ];
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | ATTENDANCE LIST
+    |--------------------------------------------------------------------------
+    */
 
     #[Computed]
     public function attendances()
@@ -75,11 +109,21 @@ new class extends Component
             ->paginate($this->perPage);
     }
 
+    /*
+    |--------------------------------------------------------------------------
+    | ABSENT (BASED ON SCHEDULE)
+    |--------------------------------------------------------------------------
+    */
+
     #[Computed]
     public function absents()
     {
         $scheduled = EmployeeSchedule::with('user.branch')
             ->whereDate('date', $this->date)
+            ->when(
+                $this->branch_id,
+                fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('branch_id', $this->branch_id))
+            )
             ->get();
 
         $presentIds = Attendance::whereDate('date', $this->date)
@@ -88,6 +132,12 @@ new class extends Component
 
         return $scheduled->filter(fn ($item) => ! in_array($item->user_id, $presentIds));
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | LATE LEADERBOARD (BASED ON MINUTES)
+    |--------------------------------------------------------------------------
+    */
 
     #[Computed]
     public function lateLeaderboard()

@@ -1,186 +1,189 @@
 <div class="space-y-6">
 
-    <div>
-        <flux:heading>Attendance Monitoring</flux:heading>
-        <flux:text class="mt-1 text-sm text-zinc-500">
-            Real-time overview of employee attendance activity.
-        </flux:text>
-    </div>
-
+    {{-- HEADER --}}
     <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
-        <flux:input type="date" wire:model.live="date" />
+        <div>
+            <flux:heading size="lg">Attendance Monitoring</flux:heading>
+            <flux:text class=" text-zinc-500">
+                Daily attendance overview based on schedule.
+            </flux:text>
+        </div>
 
-        <div class="w-full sm:w-60">
-            <flux:select wire:model.live="branch_id">
+        <div class="flex flex-col gap-2 sm:flex-row">
+
+            <flux:input type="date" wire:model.live="date" class="w-full sm:w-auto" />
+
+            <flux:select wire:model.live="branch_id" class="w-full sm:w-48">
                 <option value="">All Branches</option>
 
                 @foreach ($this->branches as $id => $name)
-                    <option value="{{ $id }}">
-                        {{ $name }}
-                    </option>
+                    <option value="{{ $id }}">{{ $name }}</option>
                 @endforeach
             </flux:select>
+
         </div>
 
     </div>
 
-    <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+    {{-- SUMMARY --}}
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
 
-        <flux:card>
-            <flux:text class="text-xs text-zinc-500">
-                Present
-            </flux:text>
-
-            <flux:heading size="lg">
-                {{ $this->summary['present'] }}
-            </flux:heading>
+        <flux:card class="p-3">
+            <flux:text class="text-xs text-zinc-500">Present</flux:text>
+            <flux:heading size="lg">{{ $this->summary['present'] }}</flux:heading>
         </flux:card>
 
-        <flux:card>
-            <flux:text class="text-xs text-zinc-500">
-                Late
-            </flux:text>
-
-            <flux:heading size="lg">
-                {{ $this->summary['late'] }}
-            </flux:heading>
+        <flux:card class="p-3">
+            <flux:text class="text-xs text-zinc-500">Late</flux:text>
+            <flux:heading size="lg">{{ $this->summary['late'] }}</flux:heading>
         </flux:card>
 
-        <flux:card>
-            <flux:text class="text-xs text-zinc-500">
-                Overtime
-            </flux:text>
-
-            <flux:heading size="lg">
-                {{ $this->summary['overtime'] }}
-            </flux:heading>
+        <flux:card class="p-3">
+            <flux:text class="text-xs text-zinc-500">Overtime</flux:text>
+            <flux:heading size="lg">{{ $this->summary['overtime'] }}</flux:heading>
         </flux:card>
 
-        <flux:card>
-            <flux:text class="text-xs text-zinc-500">
-                Absent
-            </flux:text>
-
-            <flux:heading size="lg">
-                {{ $this->summary['absent'] }}
-            </flux:heading>
+        <flux:card class="p-3">
+            <flux:text class="text-xs text-zinc-500">Absent</flux:text>
+            <flux:heading size="lg">{{ $this->summary['absent'] }}</flux:heading>
         </flux:card>
 
     </div>
 
-    <div class="grid gap-6 lg:grid-cols-3">
+    {{-- MAIN --}}
+    <div class="flex flex-col gap-6 lg:grid lg:grid-cols-3">
 
-        <flux:card class="lg:col-span-2">
+        {{-- TABLE --}}
+        <flux:card class="lg:col-span-2 overflow-x-auto">
 
             <flux:heading size="lg">
                 Attendance Activity
             </flux:heading>
 
-            <flux:table :paginate="$this->attendances">
+            <div class="mt-4 min-w-[600px]">
 
-                <flux:table.columns>
-                    <flux:table.column>User</flux:table.column>
-                    <flux:table.column>Division</flux:table.column>
-                    <flux:table.column>Check In</flux:table.column>
-                    <flux:table.column>Check Out</flux:table.column>
-                    <flux:table.column>Work</flux:table.column>
-                    <flux:table.column>Status</flux:table.column>
-                </flux:table.columns>
+                <flux:table :paginate="$this->attendances">
 
-                <flux:table.rows>
+                    <flux:table.columns>
+                        <flux:table.column>User</flux:table.column>
+                        <flux:table.column>Check In</flux:table.column>
+                        <flux:table.column>Check Out</flux:table.column>
+                        <flux:table.column>Work</flux:table.column>
+                        <flux:table.column>Status</flux:table.column>
+                    </flux:table.columns>
 
-                    @forelse ($this->attendances as $attendance)
-                        <flux:table.row>
+                    <flux:table.rows>
 
-                            <flux:table.cell>
+                        @forelse ($this->attendances as $attendance)
 
-                                <div class="flex flex-col">
+                            @php
+                                $statuses = [];
 
-                                    <span>
-                                        {{ $attendance->user->name }}
-                                    </span>
+                                if (($attendance->late_minutes ?? 0) > 0) {
+                                    $statuses[] = 'Late';
+                                }
 
-                                    <span class="text-xs text-zinc-500">
-                                        {{ $attendance->user->position->title ?? '-' }}
-                                    </span>
+                                if (($attendance->overtime_minutes ?? 0) > 0) {
+                                    $statuses[] = 'Overtime';
+                                }
 
-                                </div>
+                                if ($attendance->state === 'early_checkout') {
+                                    $statuses[] = 'Early Checkout';
+                                }
 
-                            </flux:table.cell>
+                                if (empty($statuses)) {
+                                    $statuses[] = 'On Time';
+                                }
+                            @endphp
 
-                            <flux:table.cell>
+                            <flux:table.row>
 
-                                {{ $attendance->user->position->division->name ?? '-' }}
+                                <flux:table.cell>
 
-                            </flux:table.cell>
+                                    <div class="flex flex-col">
 
-                            <flux:table.cell>
+                                        <span class="font-medium">
+                                            {{ $attendance->user->name }}
+                                        </span>
 
-                                {{ $attendance->checkin_at?->format('H:i') }}
+                                        <span class="text-xs text-zinc-400">
+                                            {{ $attendance->user->position->title ?? '-' }}
+                                        </span>
 
-                            </flux:table.cell>
+                                    </div>
 
-                            <flux:table.cell>
+                                </flux:table.cell>
 
-                                {{ $attendance->checkout_at?->format('H:i') ?? '-' }}
+                                <flux:table.cell>
+                                    {{ $attendance->checkin_at?->format('H:i') }}
+                                </flux:table.cell>
 
-                            </flux:table.cell>
+                                <flux:table.cell>
+                                    {{ $attendance->checkout_at?->format('H:i') ?? '-' }}
+                                </flux:table.cell>
 
-                            <flux:table.cell>
+                                <flux:table.cell>
+                                    {{ round(($attendance->work_minutes ?? 0) / 60, 2) }} h
+                                </flux:table.cell>
 
-                                {{ $attendance->work_minutes }} min
+                                <flux:table.cell>
 
-                            </flux:table.cell>
+                                    <div class="flex flex-wrap gap-1">
 
-                            <flux:table.cell>
+                                        @foreach ($statuses as $status)
+                                            <flux:badge
+                                                color="{{ match ($status) {
+                                                    'Late' => 'yellow',
+                                                    'Overtime' => 'purple',
+                                                    'Early Checkout' => 'orange',
+                                                    default => 'green',
+                                                } }}">
 
-                                @php
-                                    $color = match ($attendance->state) {
-                                        'late' => 'yellow',
-                                        'overtime' => 'purple',
-                                        'early_checkout' => 'orange',
-                                        default => 'green',
-                                    };
-                                @endphp
+                                                {{ $status }}
 
-                                <flux:badge color="{{ $color }}">
-                                    {{ ucfirst(str_replace('_', ' ', $attendance->state ?? 'on_time')) }}
-                                </flux:badge>
+                                            </flux:badge>
+                                        @endforeach
 
-                            </flux:table.cell>
+                                    </div>
 
-                        </flux:table.row>
+                                </flux:table.cell>
 
-                    @empty
+                            </flux:table.row>
 
-                        <flux:table.row>
+                        @empty
 
-                            <flux:table.cell colspan="6">
+                            <flux:table.row>
 
-                                <div class="flex flex-col items-center justify-center py-10">
+                                <flux:table.cell colspan="5">
 
-                                    <flux:heading size="sm">
-                                        No Attendance Data
-                                    </flux:heading>
+                                    <div class="flex flex-col items-center justify-center py-10">
 
-                                    <flux:text class="mt-1 text-sm text-zinc-500">
-                                        No attendance recorded for this day.
-                                    </flux:text>
+                                        <flux:heading size="sm">
+                                            No Attendance Data
+                                        </flux:heading>
 
-                                </div>
+                                        <flux:text class="mt-1 text-sm text-zinc-500">
+                                            No attendance recorded for this day.
+                                        </flux:text>
 
-                            </flux:table.cell>
+                                    </div>
 
-                        </flux:table.row>
-                    @endforelse
+                                </flux:table.cell>
 
-                </flux:table.rows>
+                            </flux:table.row>
 
-            </flux:table>
+                        @endforelse
+
+                    </flux:table.rows>
+
+                </flux:table>
+
+            </div>
 
         </flux:card>
 
+        {{-- SIDE --}}
         <div class="space-y-6">
 
             <flux:card>
@@ -192,9 +195,9 @@
                 <div class="mt-4 space-y-2">
 
                     @forelse ($this->lateLeaderboard as $item)
-                        <div class="flex justify-between text-sm">
+                        <div class="flex items-center justify-between text-sm">
 
-                            <span>
+                            <span class="truncate">
                                 {{ $item->user->name }}
                             </span>
 
@@ -206,7 +209,7 @@
 
                     @empty
 
-                        <flux:text class="text-sm text-zinc-500">
+                        <flux:text class=" text-zinc-500">
                             No late employees.
                         </flux:text>
                     @endforelse
@@ -224,9 +227,9 @@
                 <div class="mt-4 space-y-2">
 
                     @forelse ($this->absents as $item)
-                        <div class="flex justify-between text-sm">
+                        <div class="flex items-center justify-between text-sm">
 
-                            <span>
+                            <span class="truncate">
                                 {{ $item->user->name }}
                             </span>
 
@@ -238,7 +241,7 @@
 
                     @empty
 
-                        <flux:text class="text-sm text-zinc-500">
+                        <flux:text class=" text-zinc-500">
                             No absent employees today.
                         </flux:text>
                     @endforelse

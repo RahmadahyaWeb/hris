@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Role Management</flux:heading>
+        <flux:heading size="lg">Role Management</flux:heading>
         <flux:text class="mt-2">
             Manage roles and assign permissions that control access across the system.
         </flux:text>

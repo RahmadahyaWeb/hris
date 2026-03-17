@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Leave Management</flux:heading>
+        <flux:heading size="lg">Leave Management</flux:heading>
         <flux:text class="mt-2">
             Manage employee leave requests and approvals.
         </flux:text>

@@ -1,8 +1,8 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Enterprise Leave Calendar</flux:heading>
-        <flux:text class="text-sm text-zinc-500">
+        <flux:heading size="lg">Enterprise Leave Calendar</flux:heading>
+        <flux:text class=" text-zinc-500">
             Monitor employee leave schedules, detect conflicts, and review leave coverage.
         </flux:text>
     </div>

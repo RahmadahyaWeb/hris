@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Branch Management</flux:heading>
+        <flux:heading size="lg">Branch Management</flux:heading>
         <flux:text class="mt-2">
             Manage company branches with geographic location and attendance radius.
         </flux:text>

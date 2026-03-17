@@ -28,12 +28,6 @@ class EnterpriseDemoSeeder extends Seeder
 
         try {
 
-            /*
-            |------------------------------------------------------------
-            | Branch
-            |------------------------------------------------------------
-            */
-
             $branch = Branch::firstOrCreate(
                 ['name' => 'Head Office'],
                 [
@@ -43,21 +37,9 @@ class EnterpriseDemoSeeder extends Seeder
                 ]
             );
 
-            /*
-            |------------------------------------------------------------
-            | Divisions
-            |------------------------------------------------------------
-            */
-
             $engineering = Division::firstOrCreate(['name' => 'Engineering']);
             $hr = Division::firstOrCreate(['name' => 'Human Resources']);
             $sales = Division::firstOrCreate(['name' => 'Sales']);
-
-            /*
-            |------------------------------------------------------------
-            | Positions (Hierarchy)
-            |------------------------------------------------------------
-            */
 
             $engineeringManager = Position::firstOrCreate([
                 'division_id' => $engineering->id,
@@ -97,12 +79,6 @@ class EnterpriseDemoSeeder extends Seeder
                 'title' => 'Sales Executive',
                 'parent_id' => null,
             ]);
-
-            /*
-            |------------------------------------------------------------
-            | Users
-            |------------------------------------------------------------
-            */
 
             $engineeringManagerUser = User::firstOrCreate(
                 ['email' => 'engmanager@example.com'],
@@ -175,16 +151,25 @@ class EnterpriseDemoSeeder extends Seeder
 
             /*
             |------------------------------------------------------------
-            | Shift
+            | Shifts (ADD OVERNIGHT)
             |------------------------------------------------------------
             */
 
-            $shift = Shift::firstOrCreate(
+            $morningShift = Shift::firstOrCreate(
                 ['name' => 'Morning'],
                 [
                     'start_time' => '08:00:00',
                     'end_time' => '16:00:00',
                     'cross_midnight' => false,
+                ]
+            );
+
+            $nightShift = Shift::firstOrCreate(
+                ['name' => 'Night'],
+                [
+                    'start_time' => '22:00:00',
+                    'end_time' => '04:30:00',
+                    'cross_midnight' => true,
                 ]
             );
 
@@ -214,7 +199,7 @@ class EnterpriseDemoSeeder extends Seeder
 
             /*
             |------------------------------------------------------------
-            | Employee Schedule
+            | Employee Schedule (Backend = Overnight)
             |------------------------------------------------------------
             */
 
@@ -226,13 +211,17 @@ class EnterpriseDemoSeeder extends Seeder
 
                     foreach ($users as $user) {
 
+                        $shiftId = $user->id === $backendUser->id
+                            ? $nightShift->id
+                            : $morningShift->id;
+
                         EmployeeSchedule::firstOrCreate(
                             [
                                 'user_id' => $user->id,
                                 'date' => $date->toDateString(),
                             ],
                             [
-                                'shift_id' => $shift->id,
+                                'shift_id' => $shiftId,
                             ]
                         );
                     }
@@ -243,7 +232,7 @@ class EnterpriseDemoSeeder extends Seeder
 
             /*
             |------------------------------------------------------------
-            | Attendance
+            | Attendance (SUPPORT OVERNIGHT)
             |------------------------------------------------------------
             */
 
@@ -263,8 +252,12 @@ class EnterpriseDemoSeeder extends Seeder
                 $shiftEnd = $date->copy()
                     ->setTimeFromTimeString($schedule->shift->end_time);
 
+                if ($schedule->shift->cross_midnight && $shiftEnd->lte($shiftStart)) {
+                    $shiftEnd->addDay();
+                }
+
                 $checkin = $shiftStart->copy()->addMinutes(rand(-5, 40));
-                $checkout = $shiftEnd->copy()->addMinutes(rand(-10, 90));
+                $checkout = $shiftEnd->copy()->addMinutes(rand(-10, 120));
 
                 $attendance = Attendance::create([
                     'user_id' => $schedule->user_id,
@@ -279,9 +272,9 @@ class EnterpriseDemoSeeder extends Seeder
 
                 $attendance->update([
                     'state' => $state['state'],
-                    'late_minutes' => max(0, $shiftStart->diffInMinutes($checkin, false)),
-                    'work_minutes' => $checkin->diffInMinutes($checkout),
-                    'overtime_minutes' => max(0, $shiftEnd->diffInMinutes($checkout, false)),
+                    'late_minutes' => $state['late_minutes'],
+                    'work_minutes' => $state['work_minutes'],
+                    'overtime_minutes' => $state['overtime_minutes'],
                 ]);
             }
 

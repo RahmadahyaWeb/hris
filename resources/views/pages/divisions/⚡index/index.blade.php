@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>Division Management</flux:heading>
+        <flux:heading size="lg">Division Management</flux:heading>
         <flux:text class="mt-2">
             Manage organizational divisions used to group employees.
         </flux:text>

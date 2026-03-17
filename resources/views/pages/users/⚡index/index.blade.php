@@ -1,7 +1,7 @@
 <div class="space-y-6">
 
     <div>
-        <flux:heading>User Management</flux:heading>
+        <flux:heading size="lg">User Management</flux:heading>
         <flux:text class="mt-2">
             Manage application users, including their account information and assigned roles.
         </flux:text>

@@ -2,8 +2,8 @@
 
     {{-- Header --}}
     <div>
-        <flux:heading>Attendance</flux:heading>
-        <flux:text class="text-sm text-zinc-500">
+        <flux:heading size="lg">Attendance</flux:heading>
+        <flux:text class=" text-zinc-500">
             Record your daily attendance using your GPS location.
         </flux:text>
     </div>
@@ -152,7 +152,7 @@
 
             @empty
 
-                <flux:text class="text-sm text-zinc-500">
+                <flux:text class=" text-zinc-500">
                     No timeline today
                 </flux:text>
             @endforelse

@@ -9,10 +9,14 @@ use Carbon\Carbon;
 
 class AttendanceSummaryService
 {
-    public function period(string $startDate, string $endDate, ?int $branchId = null, ?int $divisionId = null)
-    {
-        $start = Carbon::parse($startDate)->startOfDay();
-        $end = Carbon::parse($endDate)->endOfDay();
+    public function period(
+        string $startDate,
+        string $endDate,
+        ?int $branchId = null,
+        ?int $divisionId = null
+    ) {
+        $start = Carbon::parse($startDate)->toDateString();
+        $end = Carbon::parse($endDate)->toDateString();
 
         $users = User::with(['branch', 'position.division'])
             ->when($branchId, fn ($q) => $q->where('branch_id', $branchId))
@@ -25,29 +29,59 @@ class AttendanceSummaryService
 
         foreach ($users as $user) {
 
-            $workingDays = EmployeeSchedule::where('user_id', $user->id)
-                ->whereBetween('date', [$start, $end])
-                ->count();
-
-            $attendances = Attendance::where('user_id', $user->id)
-                ->whereBetween('date', [$start, $end])
+            $schedules = EmployeeSchedule::where('user_id', $user->id)
+                ->whereDate('date', '>=', $start)
+                ->whereDate('date', '<=', $end)
                 ->get();
 
-            $present = $attendances->whereNotNull('checkin_at')->count();
+            $attendances = Attendance::where('user_id', $user->id)
+                ->whereDate('date', '>=', $start)
+                ->whereDate('date', '<=', $end)
+                ->get()
+                ->keyBy(fn ($item) => Carbon::parse($item->date)->toDateString());
 
-            $late = $attendances->where('late_minutes', '>', 0)->count();
+            $workingDays = $schedules->count();
 
-            $overtime = $attendances->where('overtime_minutes', '>', 0)->count();
+            $present = 0;
+            $late = 0;
+            $overtimeDays = 0;
+            $totalWorkMinutes = 0;
+            $totalOvertimeMinutes = 0;
+
+            foreach ($schedules as $schedule) {
+
+                $dateKey = Carbon::parse($schedule->date)->toDateString();
+
+                $attendance = $attendances->get($dateKey);
+
+                if (! $attendance) {
+                    continue;
+                }
+
+                // === PRESENT ===
+                if ($attendance->is_present) {
+                    $present++;
+                }
+
+                // === LATE (CONSISTENT) ===
+                if ($attendance->is_late) {
+                    $late++;
+                }
+
+                // === OVERTIME ===
+                if ($attendance->is_overtime) {
+                    $overtimeDays++;
+                }
+
+                $totalWorkMinutes += $attendance->work_minutes ?? 0;
+                $totalOvertimeMinutes += $attendance->overtime_minutes ?? 0;
+            }
 
             $absent = max($workingDays - $present, 0);
 
             $attendanceRate = $workingDays > 0
                 ? round(($present / $workingDays) * 100, 2)
                 : 0;
-
-            $totalWorkMinutes = $attendances->sum('work_minutes');
-
-            $totalOvertimeMinutes = $attendances->sum('overtime_minutes');
 
             $result[] = [
                 'user' => $user->name,
@@ -59,7 +93,7 @@ class AttendanceSummaryService
                 'absent' => $absent,
                 'late' => $late,
 
-                'overtime_days' => $overtime,
+                'overtime_days' => $overtimeDays,
 
                 'work_hours' => round($totalWorkMinutes / 60, 2),
                 'overtime_hours' => round($totalOvertimeMinutes / 60, 2),

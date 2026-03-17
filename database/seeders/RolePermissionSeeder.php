@@ -18,7 +18,7 @@ class RolePermissionSeeder extends Seeder
 
         try {
 
-            $permissions = [
+            $adminPermissions = [
 
                 'dashboard.view',
 
@@ -81,7 +81,27 @@ class RolePermissionSeeder extends Seeder
                 'attendances_monitoring.view',
             ];
 
-            foreach ($permissions as $permission) {
+            $employeePermission = [
+                // EMPLOYEE DASHBOARD
+                'employee_dashboard.view',
+
+                // EMPLOYEE ATTENDANCE HISTORY
+                'employee_attendance-history.view',
+
+                // EMPLOYEE ATTENDANCE HISTORY
+                'employee_attendances.view',
+            ];
+
+            foreach ($adminPermissions as $permission) {
+
+                Permission::firstOrCreate([
+                    'name' => $permission,
+                    'guard_name' => 'web',
+                ]);
+
+            }
+
+            foreach ($employeePermission as $permission) {
 
                 Permission::firstOrCreate([
                     'name' => $permission,
@@ -95,7 +115,14 @@ class RolePermissionSeeder extends Seeder
                 'guard_name' => 'web',
             ]);
 
-            $superAdminRole->syncPermissions(Permission::all());
+            $superAdminRole->syncPermissions($adminPermissions);
+
+            $employeeRole = Role::firstOrCreate([
+                'name' => 'employee',
+                'guard_name' => 'web',
+            ]);
+
+            $employeeRole->syncPermissions($employeePermission);
 
             $users = [
 

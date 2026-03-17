@@ -16,13 +16,27 @@ class AttendanceStateService
         $earlyTolerance = $rule->earlyCheckoutTolerance();
         $overtimeAfter = $rule->overtimeAfter();
 
-        $shiftStart = Carbon::parse($schedule->date)
+        /*
+        |------------------------------------------------------------
+        | BASE DATE (PENTING)
+        |------------------------------------------------------------
+        */
+
+        $baseDate = Carbon::parse($schedule->date);
+
+        $shiftStart = $baseDate->copy()
             ->setTimeFromTimeString($schedule->shift->start_time);
 
-        $shiftEnd = Carbon::parse($schedule->date)
+        $shiftEnd = $baseDate->copy()
             ->setTimeFromTimeString($schedule->shift->end_time);
 
-        if ($schedule->shift->cross_midnight || $shiftEnd->lte($shiftStart)) {
+        /*
+        |------------------------------------------------------------
+        | CROSS MIDNIGHT FIX
+        |------------------------------------------------------------
+        */
+
+        if ($schedule->shift->cross_midnight && $shiftEnd->lte($shiftStart)) {
             $shiftEnd->addDay();
         }
 
@@ -32,45 +46,63 @@ class AttendanceStateService
             ? Carbon::parse($attendance->checkout_at)
             : null;
 
-        if ($checkin->lt($shiftStart) && $schedule->shift->cross_midnight) {
-            $checkin->addDay();
-        }
-
-        if ($checkout && $checkout->lt($shiftStart) && $schedule->shift->cross_midnight) {
-            $checkout->addDay();
-        }
-
         $lateMinutes = 0;
         $workMinutes = 0;
         $overtimeMinutes = 0;
 
-        $state = 'on_time';
+        /*
+        |------------------------------------------------------------
+        | NORMALIZE CHECKIN (UNTUK OVERNIGHT)
+        |------------------------------------------------------------
+        */
+
+        if ($schedule->shift->cross_midnight && $checkin->lt($shiftStart)) {
+            $checkin->addDay();
+        }
+
+        /*
+        |------------------------------------------------------------
+        | LATE
+        |------------------------------------------------------------
+        */
 
         if ($checkin->greaterThan($shiftStart)) {
-
             $lateMinutes = $shiftStart->diffInMinutes($checkin);
-
-            if ($lateMinutes > $lateTolerance) {
-                $state = 'late';
-            }
         }
+
+        /*
+        |------------------------------------------------------------
+        | WORK & OVERTIME
+        |------------------------------------------------------------
+        */
 
         if ($checkout) {
 
+            if ($checkout->lt($checkin)) {
+                $checkout->addDay();
+            }
+
             $workMinutes = $checkin->diffInMinutes($checkout);
 
-            if ($checkout->lessThan($shiftEnd->copy()->subMinutes($earlyTolerance))) {
-                $state = 'early_checkout';
-            }
-
             if ($checkout->greaterThan($shiftEnd)) {
-
                 $overtimeMinutes = $shiftEnd->diffInMinutes($checkout);
-
-                if ($overtimeMinutes >= $overtimeAfter) {
-                    $state = 'overtime';
-                }
             }
+        }
+
+        /*
+        |------------------------------------------------------------
+        | STATE (UI ONLY)
+        |------------------------------------------------------------
+        */
+
+        if ($overtimeMinutes >= $overtimeAfter) {
+            $state = 'overtime';
+        } elseif ($lateMinutes > $lateTolerance) {
+            $state = 'late';
+        } elseif ($checkout && $checkout->lt($shiftEnd->copy()->subMinutes($earlyTolerance))) {
+            $state = 'early_checkout';
+        } else {
+            $state = 'on_time';
         }
 
         return [

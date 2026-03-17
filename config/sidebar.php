@@ -2,12 +2,6 @@
 
 return [
 
-    /*
-    |--------------------------------------------------------------------------
-    | Dashboard
-    |--------------------------------------------------------------------------
-    */
-
     [
         'label' => 'Dashboard',
         'icon' => 'home',
@@ -15,11 +9,12 @@ return [
         'permission' => 'dashboard.view',
     ],
 
-    /*
-    |--------------------------------------------------------------------------
-    | My Activities (Employee Area)
-    |--------------------------------------------------------------------------
-    */
+    [
+        'label' => 'My Dashboard',
+        'icon' => 'home',
+        'route' => 'employee.dashboard',
+        'permission' => 'employee_dashboard.view',
+    ],
 
     [
         'label' => 'My Activities',
@@ -28,37 +23,20 @@ return [
 
             [
                 'label' => 'My Attendance',
+                'icon' => 'document',
+                'route' => 'employee.attendance-history',
+                'permission' => 'employee_attendance-history.view',
+            ],
+
+            [
+                'label' => 'Check In / Out',
                 'icon' => 'map-pin',
-                'route' => 'attendances.index',
-                'permission' => '',
+                'route' => 'employee.attendances.index',
+                'permission' => 'employee_attendances.view',
             ],
-
-            /*
-            [
-                'label' => 'My Leave',
-                'icon' => 'calendar',
-                'route' => 'my-leaves.index',
-                'permission' => 'leaves.view',
-            ],
-            */
-
-            /*
-            [
-                'label' => 'Leave Balance',
-                'icon' => 'chart-bar',
-                'route' => 'leave-balances.index',
-                'permission' => 'leaves.view',
-            ],
-            */
 
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Leave Management
-    |--------------------------------------------------------------------------
-    */
 
     [
         'label' => 'Leave Management',
@@ -75,18 +53,12 @@ return [
             [
                 'label' => 'Leave Calendar',
                 'icon' => 'calendar-days',
-                'route' => 'leaves.monitoring.index',
+                'route' => 'leaves.calendar.index',
                 'permission' => 'leaves.view',
             ],
 
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Attendance Management
-    |--------------------------------------------------------------------------
-    */
 
     [
         'label' => 'Attendance Management',
@@ -96,27 +68,12 @@ return [
             [
                 'label' => 'Attendance Monitoring',
                 'icon' => 'computer-desktop',
-                'route' => 'attendances-monitoring.index',
+                'route' => 'attendance.monitoring.index',
                 'permission' => 'attendances_monitoring.view',
             ],
 
-            /*
-            [
-                'label' => 'Attendance Corrections',
-                'icon' => 'pencil-square',
-                'route' => 'attendance-corrections.index',
-                'permission' => '',
-            ],
-            */
-
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Reports
-    |--------------------------------------------------------------------------
-    */
 
     [
         'label' => 'Reports',
@@ -124,38 +81,14 @@ return [
         'children' => [
 
             [
-                'label' => 'Attendance Period',
-                'icon' => 'document',
-                'route' => 'reports.periode.index',
-                'permission' => '',
-            ],
-
-            /*
-            [
                 'label' => 'Attendance Report',
-                'icon' => 'calendar-days',
-                'route' => 'reports.attendance.index',
+                'icon' => 'document',
+                'route' => 'reports.attendance-report.index',
                 'permission' => '',
             ],
-            */
-
-            /*
-            [
-                'label' => 'Leave Report',
-                'icon' => 'document-chart-bar',
-                'route' => 'reports.leave.index',
-                'permission' => '',
-            ],
-            */
 
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Organization
-    |--------------------------------------------------------------------------
-    */
 
     [
         'label' => 'Organization',
@@ -165,41 +98,26 @@ return [
             [
                 'label' => 'Branches',
                 'icon' => 'building-office-2',
-                'route' => 'branches.index',
+                'route' => 'organization.branches.index',
                 'permission' => 'branches.view',
             ],
 
             [
                 'label' => 'Divisions',
                 'icon' => 'building-office',
-                'route' => 'divisions.index',
+                'route' => 'organization.divisions.index',
                 'permission' => 'divisions.view',
             ],
 
             [
                 'label' => 'Positions',
                 'icon' => 'briefcase',
-                'route' => 'positions.index',
+                'route' => 'organization.positions.index',
                 'permission' => 'positions.view',
             ],
 
-            /*
-            [
-                'label' => 'Organization Chart',
-                'icon' => 'squares-2x2',
-                'route' => 'organization-chart.index',
-                'permission' => '',
-            ],
-            */
-
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | User Management
-    |--------------------------------------------------------------------------
-    */
 
     [
         'label' => 'User Management',
@@ -216,18 +134,12 @@ return [
             [
                 'label' => 'User Devices',
                 'icon' => 'device-phone-mobile',
-                'route' => 'user-devices.index',
+                'route' => 'users.devices.index',
                 'permission' => 'user_devices.view',
             ],
 
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | Access Control
-    |--------------------------------------------------------------------------
-    */
 
     [
         'label' => 'Access Control',
@@ -237,18 +149,12 @@ return [
             [
                 'label' => 'Roles & Permissions',
                 'icon' => 'lock-closed',
-                'route' => 'roles.index',
+                'route' => 'access-control.roles.index',
                 'permission' => 'roles.view',
             ],
 
         ],
     ],
-
-    /*
-    |--------------------------------------------------------------------------
-    | System Settings
-    |--------------------------------------------------------------------------
-    */
 
     [
         'label' => 'System Settings',
@@ -258,35 +164,28 @@ return [
             [
                 'label' => 'Shifts',
                 'icon' => 'arrows-up-down',
-                'route' => 'shifts.index',
+                'route' => 'settings.shifts.index',
                 'permission' => 'shifts.view',
             ],
 
             [
                 'label' => 'Work Calendars',
                 'icon' => 'calendar-days',
-                'route' => 'work-calendars.index',
+                'route' => 'settings.work-calendars.index',
                 'permission' => 'work_calendars.view',
             ],
-
-            // [
-            //     'label' => 'Calendar Setup',
-            //     'icon' => 'calendar',
-            //     'route' => 'calendars.index',
-            //     'permission' => '',
-            // ],
 
             [
                 'label' => 'Employee Schedules',
                 'icon' => 'clock',
-                'route' => 'employee-schedules.index',
+                'route' => 'settings.employee-schedules.index',
                 'permission' => 'employee_schedules.view',
             ],
 
             [
                 'label' => 'Attendance Rules',
                 'icon' => 'cog-8-tooth',
-                'route' => 'attendances-rules.index',
+                'route' => 'settings.attendance-rules.index',
                 'permission' => 'attendance_rules.view',
             ],
 
