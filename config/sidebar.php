@@ -10,7 +10,7 @@ return [
     ],
 
     [
-        'label' => 'My Dashboard',
+        'label' => 'Dashboard',
         'icon' => 'home',
         'route' => 'employee.dashboard',
         'permission' => 'employee_dashboard.view',
