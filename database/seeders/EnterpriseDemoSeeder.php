@@ -33,7 +33,7 @@ class EnterpriseDemoSeeder extends Seeder
                 [
                     'latitude' => -3.3186000,
                     'longitude' => 114.5944000,
-                    'radius' => 200,
+                    'radius' => 100,
                 ]
             );
 
@@ -149,12 +149,6 @@ class EnterpriseDemoSeeder extends Seeder
                 $salesUser,
             ];
 
-            /*
-            |------------------------------------------------------------
-            | Shifts (ADD OVERNIGHT)
-            |------------------------------------------------------------
-            */
-
             $morningShift = Shift::firstOrCreate(
                 ['name' => 'Morning'],
                 [
@@ -173,14 +167,8 @@ class EnterpriseDemoSeeder extends Seeder
                 ]
             );
 
-            /*
-            |------------------------------------------------------------
-            | Work Calendar
-            |------------------------------------------------------------
-            */
-
             $start = Carbon::create(now()->year, 2, 1);
-            $end = Carbon::create(2026, 3, 15);
+            $end = Carbon::create(2026, 3, 21);
 
             $date = $start->copy();
 
@@ -196,12 +184,6 @@ class EnterpriseDemoSeeder extends Seeder
 
                 $date->addDay();
             }
-
-            /*
-            |------------------------------------------------------------
-            | Employee Schedule (Backend = Overnight)
-            |------------------------------------------------------------
-            */
 
             $date = $start->copy();
 
@@ -229,12 +211,6 @@ class EnterpriseDemoSeeder extends Seeder
 
                 $date->addDay();
             }
-
-            /*
-            |------------------------------------------------------------
-            | Attendance (SUPPORT OVERNIGHT)
-            |------------------------------------------------------------
-            */
 
             $schedules = EmployeeSchedule::with('shift')->get();
 
@@ -278,19 +254,7 @@ class EnterpriseDemoSeeder extends Seeder
                 ]);
             }
 
-            /*
-            |------------------------------------------------------------
-            | Leave Types
-            |------------------------------------------------------------
-            */
-
             $annual = LeaveType::firstOrCreate(['name' => 'Annual Leave']);
-
-            /*
-            |------------------------------------------------------------
-            | Approval Steps
-            |------------------------------------------------------------
-            */
 
             ApprovalStep::firstOrCreate([
                 'leave_type_id' => $annual->id,
@@ -305,12 +269,6 @@ class EnterpriseDemoSeeder extends Seeder
             ], [
                 'approver_type' => 'hr',
             ]);
-
-            /*
-            |------------------------------------------------------------
-            | Leave Balance
-            |------------------------------------------------------------
-            */
 
             foreach ($users as $user) {
 

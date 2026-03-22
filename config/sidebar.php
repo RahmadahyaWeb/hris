@@ -22,17 +22,17 @@ return [
         'children' => [
 
             [
-                'label' => 'My Attendance',
-                'icon' => 'document',
-                'route' => 'employee.attendance-history',
-                'permission' => 'employee_attendance-history.view',
-            ],
-
-            [
                 'label' => 'Check In / Out',
                 'icon' => 'map-pin',
                 'route' => 'employee.attendances.index',
                 'permission' => 'employee_attendances.view',
+            ],
+
+            [
+                'label' => 'My Attendance',
+                'icon' => 'document',
+                'route' => 'employee.attendance-history',
+                'permission' => 'employee_attendance-history.view',
             ],
 
             [
