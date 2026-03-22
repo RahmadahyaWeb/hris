@@ -25,6 +25,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('attendance-history', 'pages::employee.attendance-history')
             ->name('attendance-history');
 
+        Route::livewire('leave', 'pages::employee.leave')
+            ->name('leave');
+
     });
 
     /*

@@ -180,7 +180,7 @@
                 Check In / Out
             </flux:button>
 
-            <flux:button class="w-full" variant="outline" href="{{ route('leaves.index') }}">
+            <flux:button class="w-full" variant="outline" href="{{ route('employee.leave') }}">
                 Request Leave
             </flux:button>
 

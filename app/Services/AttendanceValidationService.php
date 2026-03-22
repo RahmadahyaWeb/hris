@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\EmployeeSchedule;
+use App\Models\Leave;
 use App\Models\User;
 use App\Models\UserDevice;
 use App\Models\WorkCalendar;
@@ -40,10 +41,18 @@ class AttendanceValidationService
 
     private function validateSchedule(User $user): bool
     {
-        return EmployeeSchedule::where([
+        $hasSchedule = EmployeeSchedule::where([
             'user_id' => $user->id,
             'date' => today(),
         ])->exists();
+
+        $isOnLeave = Leave::where('user_id', $user->id)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', today())
+            ->whereDate('end_date', '>=', today())
+            ->exists();
+
+        return $hasSchedule && ! $isOnLeave;
     }
 
     private function validateHoliday(): bool
@@ -74,8 +83,6 @@ class AttendanceValidationService
             $branch->latitude,
             $branch->longitude
         );
-
-        // dd($distance);
 
         return $distance <= $branch->radius;
     }

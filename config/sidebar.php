@@ -35,6 +35,13 @@ return [
                 'permission' => 'employee_attendances.view',
             ],
 
+            [
+                'label' => 'My Leave',
+                'icon' => 'document',
+                'route' => 'employee.leave',
+                'permission' => 'employee_leave.view',
+            ],
+
         ],
     ],
 
