@@ -77,26 +77,6 @@
 
                         @forelse ($this->attendances as $attendance)
 
-                            @php
-                                $statuses = [];
-
-                                if (($attendance->late_minutes ?? 0) > 0) {
-                                    $statuses[] = 'Late';
-                                }
-
-                                if (($attendance->overtime_minutes ?? 0) > 0) {
-                                    $statuses[] = 'Overtime';
-                                }
-
-                                if ($attendance->state === 'early_checkout') {
-                                    $statuses[] = 'Early Checkout';
-                                }
-
-                                if (empty($statuses)) {
-                                    $statuses[] = 'On Time';
-                                }
-                            @endphp
-
                             <flux:table.row>
 
                                 <flux:table.cell>
@@ -124,24 +104,38 @@
                                 </flux:table.cell>
 
                                 <flux:table.cell>
-                                    {{ round(($attendance->work_minutes ?? 0) / 60, 2) }} h
+
+                                    <div class="flex flex-col">
+
+                                        <span>
+                                            {{ round(($attendance->work_minutes ?? 0) / 60, 2) }} h
+                                        </span>
+
+                                        @php
+                                            $break = $attendance->breaks->first();
+                                        @endphp
+
+                                        @if ($break)
+                                            <span class="text-[10px] text-zinc-400">
+                                                Break:
+                                                {{ \Carbon\Carbon::parse($break->start_at)->format('H:i') }}
+                                                -
+                                                {{ \Carbon\Carbon::parse($break->end_at)->format('H:i') }}
+                                                ({{ $break->duration_minutes }}m)
+                                            </span>
+                                        @endif
+
+                                    </div>
+
                                 </flux:table.cell>
 
                                 <flux:table.cell>
 
                                     <div class="flex flex-wrap gap-1">
 
-                                        @foreach ($statuses as $status)
-                                            <flux:badge
-                                                color="{{ match ($status) {
-                                                    'Late' => 'yellow',
-                                                    'Overtime' => 'purple',
-                                                    'Early Checkout' => 'orange',
-                                                    default => 'green',
-                                                } }}">
-
-                                                {{ $status }}
-
+                                        @foreach ($attendance->statuses as $status)
+                                            <flux:badge color="{{ $status['color'] }}">
+                                                {{ $status['label'] }}
                                             </flux:badge>
                                         @endforeach
 
@@ -172,7 +166,6 @@
                                 </flux:table.cell>
 
                             </flux:table.row>
-
                         @endforelse
 
                     </flux:table.rows>

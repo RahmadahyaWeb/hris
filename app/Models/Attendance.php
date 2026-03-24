@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\AttendanceRuleService;
 use Illuminate\Database\Eloquent\Model;
 
 class Attendance extends Model
@@ -33,12 +32,22 @@ class Attendance extends Model
         return $this->belongsTo(User::class);
     }
 
-    /*
-    |------------------------------------------------------------
-    | COMPUTED FLAGS (STANDARDIZED LOGIC)
-    |------------------------------------------------------------
-    */
+    public function breaks()
+    {
+        return $this->hasMany(AttendanceBreak::class);
+    }
 
+    /**
+     * Total break minutes
+     */
+    public function getBreakMinutesAttribute(): int
+    {
+        return $this->breaks->sum('duration_minutes');
+    }
+
+    /**
+     * Flags (untuk UI & summary konsisten)
+     */
     public function getIsPresentAttribute(): bool
     {
         return ! is_null($this->checkin_at);
@@ -46,9 +55,7 @@ class Attendance extends Model
 
     public function getIsLateAttribute(): bool
     {
-        $rule = new AttendanceRuleService;
-
-        return $this->late_minutes > $rule->lateTolerance();
+        return $this->late_minutes > 0;
     }
 
     public function getIsOvertimeAttribute(): bool

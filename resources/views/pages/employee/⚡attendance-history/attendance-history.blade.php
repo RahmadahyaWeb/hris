@@ -105,37 +105,6 @@
 
     </div>
 
-    <!-- SUMMARY -->
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
-
-        <flux:card class="p-3 text-center">
-            <div class="text-xs text-zinc-500">Present</div>
-            <div class="text-lg font-semibold">{{ $this->summary['present'] }}</div>
-        </flux:card>
-
-        <flux:card class="p-3 text-center">
-            <div class="text-xs text-zinc-500">Late</div>
-            <div class="text-lg font-semibold text-yellow-500">
-                {{ $this->summary['late'] }}
-            </div>
-        </flux:card>
-
-        <flux:card class="p-3 text-center">
-            <div class="text-xs text-zinc-500">Early</div>
-            <div class="text-lg font-semibold text-red-500">
-                {{ $this->summary['early'] }}
-            </div>
-        </flux:card>
-
-        <flux:card class="p-3 text-center">
-            <div class="text-xs text-zinc-500">Overtime</div>
-            <div class="text-lg font-semibold text-blue-500">
-                {{ $this->summary['overtime'] }}
-            </div>
-        </flux:card>
-
-    </div>
-
     <!-- LIST -->
     <div class="space-y-3">
 

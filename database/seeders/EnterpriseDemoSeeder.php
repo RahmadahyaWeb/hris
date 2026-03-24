@@ -3,18 +3,14 @@
 namespace Database\Seeders;
 
 use App\Models\ApprovalStep;
-use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\Division;
-use App\Models\EmployeeSchedule;
 use App\Models\LeaveBalance;
 use App\Models\LeaveType;
 use App\Models\Position;
 use App\Models\Shift;
+use App\Models\ShiftBreak;
 use App\Models\User;
-use App\Models\WorkCalendar;
-use App\Services\AttendanceStateService;
-use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -24,130 +20,68 @@ class EnterpriseDemoSeeder extends Seeder
 {
     public function run(): void
     {
-        DB::beginTransaction();
-
         try {
+
+            /*
+            |------------------------------------------------------------
+            | MASTER DATA
+            |------------------------------------------------------------
+            */
 
             $branch = Branch::firstOrCreate(
                 ['name' => 'Head Office'],
                 [
-                    'latitude' => -3.3186000,
-                    'longitude' => 114.5944000,
+                    'latitude' => -3.3186,
+                    'longitude' => 114.5944,
                     'radius' => 100,
                 ]
             );
 
-            $engineering = Division::firstOrCreate(['name' => 'Engineering']);
-            $hr = Division::firstOrCreate(['name' => 'Human Resources']);
-            $sales = Division::firstOrCreate(['name' => 'Sales']);
+            $division = Division::firstOrCreate(['name' => 'Engineering']);
 
-            $engineeringManager = Position::firstOrCreate([
-                'division_id' => $engineering->id,
-                'title' => 'Engineering Manager',
+            $manager = Position::firstOrCreate([
+                'division_id' => $division->id,
+                'title' => 'Manager',
                 'parent_id' => null,
             ]);
 
-            $backend = Position::firstOrCreate([
-                'division_id' => $engineering->id,
-                'title' => 'Backend Developer',
-            ], [
-                'parent_id' => $engineeringManager->id,
+            $staff = Position::firstOrCreate([
+                'division_id' => $division->id,
+                'title' => 'Staff',
+                'parent_id' => $manager->id,
             ]);
 
-            $frontend = Position::firstOrCreate([
-                'division_id' => $engineering->id,
-                'title' => 'Frontend Developer',
-            ], [
-                'parent_id' => $engineeringManager->id,
-            ]);
+            /*
+            |------------------------------------------------------------
+            | USERS (3)
+            |------------------------------------------------------------
+            */
 
-            $devops = Position::firstOrCreate([
-                'division_id' => $engineering->id,
-                'title' => 'DevOps Engineer',
-            ], [
-                'parent_id' => $engineeringManager->id,
-            ]);
-
-            $hrManager = Position::firstOrCreate([
-                'division_id' => $hr->id,
-                'title' => 'HR Manager',
-                'parent_id' => null,
-            ]);
-
-            $salesExecutive = Position::firstOrCreate([
-                'division_id' => $sales->id,
-                'title' => 'Sales Executive',
-                'parent_id' => null,
-            ]);
-
-            $engineeringManagerUser = User::firstOrCreate(
-                ['email' => 'engmanager@example.com'],
+            $morningUser = User::firstOrCreate(
+                ['email' => 'morning@example.com'],
                 [
-                    'name' => 'Engineering Manager',
+                    'name' => 'Morning User',
                     'password' => Hash::make('password'),
                     'branch_id' => $branch->id,
-                    'position_id' => $engineeringManager->id,
+                    'position_id' => $staff->id,
                 ]
             );
 
-            $backendUser = User::firstOrCreate(
-                ['email' => 'backend@example.com'],
+            $nightUser = User::firstOrCreate(
+                ['email' => 'night@example.com'],
                 [
-                    'name' => 'Backend Dev',
+                    'name' => 'Night User',
                     'password' => Hash::make('password'),
                     'branch_id' => $branch->id,
-                    'position_id' => $backend->id,
+                    'position_id' => $staff->id,
                 ]
             );
 
-            $frontendUser = User::firstOrCreate(
-                ['email' => 'frontend@example.com'],
-                [
-                    'name' => 'Frontend Dev',
-                    'password' => Hash::make('password'),
-                    'branch_id' => $branch->id,
-                    'position_id' => $frontend->id,
-                ]
-            );
-
-            $devopsUser = User::firstOrCreate(
-                ['email' => 'devops@example.com'],
-                [
-                    'name' => 'DevOps Engineer',
-                    'password' => Hash::make('password'),
-                    'branch_id' => $branch->id,
-                    'position_id' => $devops->id,
-                ]
-            );
-
-            $hrUser = User::firstOrCreate(
-                ['email' => 'hr@example.com'],
-                [
-                    'name' => 'HR Manager',
-                    'password' => Hash::make('password'),
-                    'branch_id' => $branch->id,
-                    'position_id' => $hrManager->id,
-                ]
-            );
-
-            $salesUser = User::firstOrCreate(
-                ['email' => 'sales@example.com'],
-                [
-                    'name' => 'Sales Executive',
-                    'password' => Hash::make('password'),
-                    'branch_id' => $branch->id,
-                    'position_id' => $salesExecutive->id,
-                ]
-            );
-
-            $users = [
-                $engineeringManagerUser,
-                $backendUser,
-                $frontendUser,
-                $devopsUser,
-                $hrUser,
-                $salesUser,
-            ];
+            /*
+            |------------------------------------------------------------
+            | SHIFT + BREAK
+            |------------------------------------------------------------
+            */
 
             $morningShift = Shift::firstOrCreate(
                 ['name' => 'Morning'],
@@ -167,130 +101,158 @@ class EnterpriseDemoSeeder extends Seeder
                 ]
             );
 
-            $start = Carbon::create(now()->year, 2, 1);
-            $end = Carbon::create(2026, 3, 23);
+            ShiftBreak::updateOrCreate(
+                ['shift_id' => $morningShift->id],
+                [
+                    'start_time' => '12:00:00',
+                    'end_time' => '13:00:00',
+                    'duration_minutes' => 60,
+                ]
+            );
 
-            $date = $start->copy();
+            ShiftBreak::updateOrCreate(
+                ['shift_id' => $nightShift->id],
+                [
+                    'start_time' => '01:00:00',
+                    'end_time' => '01:30:00',
+                    'duration_minutes' => 30,
+                ]
+            );
 
-            while ($date->lte($end)) {
+            /*
+            |------------------------------------------------------------
+            | CALENDAR (LIGHT)
+            |------------------------------------------------------------
+            */
 
-                WorkCalendar::firstOrCreate(
-                    ['date' => $date->toDateString()],
-                    [
-                        'is_holiday' => $date->isWeekend(),
-                        'description' => $date->isWeekend() ? 'Weekend' : null,
-                    ]
-                );
+            $start = date('Y-m-01');
 
-                $date->addDay();
+            for ($i = 0; $i < 23; $i++) {
+
+                $date = date('Y-m-d', strtotime("+$i days", strtotime($start)));
+
+                DB::table('work_calendars')->insertOrIgnore([
+                    'date' => $date,
+                    'is_holiday' => date('N', strtotime($date)) >= 6,
+                    'description' => date('N', strtotime($date)) >= 6 ? 'Weekend' : null,
+                ]);
             }
 
-            $date = $start->copy();
+            /*
+            |------------------------------------------------------------
+            | SCHEDULE + ATTENDANCE + BREAK (ULTRA LIGHT)
+            |------------------------------------------------------------
+            */
 
-            while ($date->lte($end)) {
+            for ($i = 0; $i < 23; $i++) {
 
-                if (! $date->isWeekend()) {
+                $date = date('Y-m-d', strtotime("+$i days", strtotime($start)));
 
-                    foreach ($users as $user) {
-
-                        $shiftId = $user->id === $backendUser->id
-                            ? $nightShift->id
-                            : $morningShift->id;
-
-                        EmployeeSchedule::firstOrCreate(
-                            [
-                                'user_id' => $user->id,
-                                'date' => $date->toDateString(),
-                            ],
-                            [
-                                'shift_id' => $shiftId,
-                            ]
-                        );
-                    }
-                }
-
-                $date->addDay();
-            }
-
-            $schedules = EmployeeSchedule::with('shift')->get();
-
-            foreach ($schedules as $schedule) {
-
-                if (rand(1, 100) <= 5) {
+                if (date('N', strtotime($date)) >= 6) {
                     continue;
                 }
 
-                $date = Carbon::parse($schedule->date);
-
-                $shiftStart = $date->copy()
-                    ->setTimeFromTimeString($schedule->shift->start_time);
-
-                $shiftEnd = $date->copy()
-                    ->setTimeFromTimeString($schedule->shift->end_time);
-
-                if ($schedule->shift->cross_midnight && $shiftEnd->lte($shiftStart)) {
-                    $shiftEnd->addDay();
-                }
-
-                $checkin = $shiftStart->copy()->addMinutes(rand(-5, 40));
-                $checkout = $shiftEnd->copy()->addMinutes(rand(-10, 120));
-
-                $attendance = Attendance::create([
-                    'user_id' => $schedule->user_id,
-                    'date' => $schedule->date,
-                    'checkin_at' => $checkin,
-                    'checkout_at' => $checkout,
+                /*
+                |-------------------------
+                | SCHEDULE
+                |-------------------------
+                */
+                DB::table('employee_schedules')->insertOrIgnore([
+                    [
+                        'user_id' => $morningUser->id,
+                        'date' => $date,
+                        'shift_id' => $morningShift->id,
+                    ],
+                    [
+                        'user_id' => $nightUser->id,
+                        'date' => $date,
+                        'shift_id' => $nightShift->id,
+                    ],
                 ]);
 
-                $stateService = new AttendanceStateService;
+                /*
+                |-------------------------
+                | MORNING ATTENDANCE
+                |-------------------------
+                */
 
-                $state = $stateService->resolve($attendance, $schedule);
+                $attendanceId = DB::table('attendances')->insertGetId([
+                    'user_id' => $morningUser->id,
+                    'date' => $date,
+                    'checkin_at' => $date.' 08:05:00',
+                    'checkout_at' => $date.' 16:30:00',
+                    'state' => 'on_time',
+                    'late_minutes' => 5,
+                    'work_minutes' => 480,
+                    'overtime_minutes' => 30,
+                ]);
 
-                $attendance->update([
-                    'state' => $state['state'],
-                    'late_minutes' => $state['late_minutes'],
-                    'work_minutes' => $state['work_minutes'],
-                    'overtime_minutes' => $state['overtime_minutes'],
+                DB::table('attendance_breaks')->insert([
+                    'attendance_id' => $attendanceId,
+                    'start_at' => $date.' 12:00:00',
+                    'end_at' => $date.' 13:00:00',
+                    'duration_minutes' => 60,
+                ]);
+
+                /*
+                |-------------------------
+                | NIGHT ATTENDANCE
+                |-------------------------
+                */
+
+                $attendanceId = DB::table('attendances')->insertGetId([
+                    'user_id' => $nightUser->id,
+                    'date' => $date,
+                    'checkin_at' => $date.' 22:05:00',
+                    'checkout_at' => date('Y-m-d H:i:s', strtotime($date.' 04:45:00 +1 day')),
+                    'state' => 'on_time',
+                    'late_minutes' => 5,
+                    'work_minutes' => 390,
+                    'overtime_minutes' => 15,
+                ]);
+
+                DB::table('attendance_breaks')->insert([
+                    'attendance_id' => $attendanceId,
+                    'start_at' => date('Y-m-d H:i:s', strtotime($date.' 01:00:00 +1 day')),
+                    'end_at' => date('Y-m-d H:i:s', strtotime($date.' 01:30:00 +1 day')),
+                    'duration_minutes' => 30,
                 ]);
             }
 
-            $annual = LeaveType::firstOrCreate(['name' => 'Annual Leave']);
+            /*
+            |------------------------------------------------------------
+            | LEAVE
+            |------------------------------------------------------------
+            */
+
+            $leave = LeaveType::firstOrCreate(['name' => 'Annual Leave']);
 
             ApprovalStep::firstOrCreate([
-                'leave_type_id' => $annual->id,
+                'leave_type_id' => $leave->id,
                 'step_order' => 1,
-            ], [
                 'approver_type' => 'manager',
             ]);
 
             ApprovalStep::firstOrCreate([
-                'leave_type_id' => $annual->id,
+                'leave_type_id' => $leave->id,
                 'step_order' => 2,
-            ], [
                 'approver_type' => 'hr',
             ]);
 
-            foreach ($users as $user) {
+            foreach ([$morningUser, $nightUser] as $user) {
 
-                LeaveBalance::firstOrCreate(
-                    [
-                        'user_id' => $user->id,
-                        'leave_type_id' => $annual->id,
-                        'year' => now()->year,
-                    ],
-                    [
-                        'total_days' => 12,
-                        'used_days' => 0,
-                        'remaining_days' => 12,
-                    ]
-                );
+                LeaveBalance::firstOrCreate([
+                    'user_id' => $user->id,
+                    'leave_type_id' => $leave->id,
+                    'year' => date('Y'),
+                ], [
+                    'total_days' => 12,
+                    'used_days' => 0,
+                    'remaining_days' => 12,
+                ]);
             }
 
-            DB::commit();
-
         } catch (Exception $e) {
-
-            DB::rollBack();
             throw $e;
         }
     }

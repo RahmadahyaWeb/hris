@@ -3,6 +3,8 @@
 use App\Models\Attendance;
 use App\Models\Branch;
 use App\Models\EmployeeSchedule;
+use App\Services\AttendanceRuleService;
+use Carbon\Carbon;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -39,7 +41,12 @@ new class extends Component
     #[Computed]
     public function summary()
     {
-        $schedules = EmployeeSchedule::with('user')
+        $rule = new AttendanceRuleService;
+
+        $lateTolerance = $rule->lateTolerance();
+        $overtimeAfter = $rule->overtimeAfter();
+
+        $schedules = EmployeeSchedule::with(['user', 'shift'])
             ->whereDate('date', $this->date)
             ->when(
                 $this->branch_id,
@@ -71,11 +78,17 @@ new class extends Component
                 $present++;
             }
 
-            if (($attendance->late_minutes ?? 0) > 0) {
+            /*
+            |--------------------------------------------------------------------------
+            | LATE WITH TOLERANCE
+            |--------------------------------------------------------------------------
+            | late_minutes > tolerance → dihitung telat
+            */
+            if (($attendance->late_minutes ?? 0) > $lateTolerance) {
                 $late++;
             }
 
-            if (($attendance->overtime_minutes ?? 0) > 0) {
+            if (($attendance->overtime_minutes ?? 0) > $overtimeAfter) {
                 $overtime++;
             }
         }
@@ -99,14 +112,83 @@ new class extends Component
     #[Computed]
     public function attendances()
     {
-        return Attendance::with(['user.branch', 'user.position.division'])
+        $rule = new AttendanceRuleService;
+
+        $lateTolerance = $rule->lateTolerance();
+        $overtimeAfter = $rule->overtimeAfter();
+
+        return Attendance::with([
+            'user.branch',
+            'user.position.division',
+            'breaks',
+        ])
             ->whereDate('date', $this->date)
             ->when(
                 $this->branch_id,
                 fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('branch_id', $this->branch_id))
             )
             ->latest()
-            ->paginate($this->perPage);
+            ->paginate($this->perPage)
+            ->through(function ($attendance) use ($lateTolerance, $overtimeAfter) {
+
+                /*
+                |--------------------------------------------------------------------------
+                | STATUS (MOVE FROM VIEW → COMPONENT)
+                |--------------------------------------------------------------------------
+                */
+
+                $statuses = [];
+
+                if (($attendance->late_minutes ?? 0) > $lateTolerance) {
+                    $statuses[] = [
+                        'label' => 'Late',
+                        'color' => 'yellow',
+                    ];
+                }
+
+                if (($attendance->overtime_minutes ?? 0) > $overtimeAfter) {
+                    $statuses[] = [
+                        'label' => 'Overtime',
+                        'color' => 'purple',
+                    ];
+                }
+
+                if ($attendance->state === 'early_checkout') {
+                    $statuses[] = [
+                        'label' => 'Early Checkout',
+                        'color' => 'orange',
+                    ];
+                }
+
+                if (empty($statuses)) {
+                    $statuses[] = [
+                        'label' => 'On Time',
+                        'color' => 'green',
+                    ];
+                }
+
+                /*
+                |--------------------------------------------------------------------------
+                | BREAK (MOVE FROM VIEW → COMPONENT)
+                |--------------------------------------------------------------------------
+                */
+
+                $break = $attendance->breaks->first();
+
+                $attendance->break_label = null;
+
+                if ($break) {
+                    $attendance->break_label =
+                        Carbon::parse($break->start_at)->format('H:i')
+                        .' - '
+                        .Carbon::parse($break->end_at)->format('H:i')
+                        .' ('.$break->duration_minutes.'m)';
+                }
+
+                $attendance->statuses = $statuses;
+
+                return $attendance;
+            });
     }
 
     /*

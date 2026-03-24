@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\Shift;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
@@ -22,36 +23,53 @@ new class extends Component
 
     public bool $cross_midnight = false;
 
+    public array $breaks = [];
+
     public ?int $deleteId = null;
 
     #[Computed]
     public function shifts()
     {
-        $this->authorize('viewAny', Shift::class);
-
-        return Shift::latest()->paginate($this->perPage);
+        return Shift::with('breaks')
+            ->latest()
+            ->paginate($this->perPage);
     }
 
     protected function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'name' => ['required'],
             'start_time' => ['required'],
             'end_time' => ['required'],
             'cross_midnight' => ['boolean'],
+            'breaks.*.start_time' => ['required'],
+            'breaks.*.end_time' => ['required'],
         ];
+    }
+
+    public function addBreak(): void
+    {
+        $this->breaks[] = [
+            'start_time' => '',
+            'end_time' => '',
+        ];
+    }
+
+    public function removeBreak($index): void
+    {
+        unset($this->breaks[$index]);
+        $this->breaks = array_values($this->breaks);
     }
 
     public function create(): void
     {
-        $this->authorize('create', Shift::class);
-
         $this->reset([
             'shiftId',
             'name',
             'start_time',
             'end_time',
             'cross_midnight',
+            'breaks',
         ]);
 
         $this->modal('shift-form')->show();
@@ -59,15 +77,18 @@ new class extends Component
 
     public function edit(int $id): void
     {
-        $shift = Shift::findOrFail($id);
-
-        $this->authorize('update', $shift);
+        $shift = Shift::with('breaks')->findOrFail($id);
 
         $this->shiftId = $shift->id;
         $this->name = $shift->name;
         $this->start_time = $shift->start_time;
         $this->end_time = $shift->end_time;
         $this->cross_midnight = $shift->cross_midnight;
+
+        $this->breaks = $shift->breaks->map(fn ($b) => [
+            'start_time' => $b->start_time,
+            'end_time' => $b->end_time,
+        ])->toArray();
 
         $this->modal('shift-form')->show();
     }
@@ -84,19 +105,26 @@ new class extends Component
 
                 $shift = Shift::findOrFail($this->shiftId);
 
-                $this->authorize('update', $shift);
-
                 $shift->update($validated);
-
-                $message = 'Shift updated successfully';
 
             } else {
 
-                $this->authorize('create', Shift::class);
+                $shift = Shift::create($validated);
+            }
 
-                Shift::create($validated);
+            // RESET BREAK
+            $shift->breaks()->delete();
 
-                $message = 'Shift created successfully';
+            foreach ($this->breaks as $break) {
+
+                $start = Carbon::parse($break['start_time']);
+                $end = Carbon::parse($break['end_time']);
+
+                $shift->breaks()->create([
+                    'start_time' => $break['start_time'],
+                    'end_time' => $break['end_time'],
+                    'duration_minutes' => $start->diffInMinutes($end),
+                ]);
             }
 
             DB::commit();
@@ -105,65 +133,13 @@ new class extends Component
 
             $this->dispatch('alert', [
                 'title' => 'Success',
-                'message' => $message,
+                'message' => 'Shift saved',
                 'variant' => 'success',
-            ]);
-
-            $this->reset([
-                'shiftId',
-                'name',
-                'start_time',
-                'end_time',
-                'cross_midnight',
             ]);
 
         } catch (Throwable $e) {
 
             DB::rollBack();
-
-            throw $e;
-        }
-    }
-
-    public function confirmDelete(int $id): void
-    {
-        $shift = Shift::findOrFail($id);
-
-        $this->authorize('delete', $shift);
-
-        $this->deleteId = $id;
-
-        $this->modal('delete-shift')->show();
-    }
-
-    public function destroy(): void
-    {
-        DB::beginTransaction();
-
-        try {
-
-            $shift = Shift::findOrFail($this->deleteId);
-
-            $this->authorize('delete', $shift);
-
-            $shift->delete();
-
-            DB::commit();
-
-            $this->modal('delete-shift')->close();
-
-            $this->dispatch('alert', [
-                'title' => 'Success',
-                'message' => 'Shift deleted successfully',
-                'variant' => 'success',
-            ]);
-
-            $this->deleteId = null;
-
-        } catch (Throwable $e) {
-
-            DB::rollBack();
-
             throw $e;
         }
     }

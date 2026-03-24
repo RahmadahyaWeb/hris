@@ -16,4 +16,9 @@ class Shift extends Model
     protected $casts = [
         'cross_midnight' => 'boolean',
     ];
+
+    public function breaks()
+    {
+        return $this->hasMany(ShiftBreak::class);
+    }
 }
