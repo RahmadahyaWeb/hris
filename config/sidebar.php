@@ -17,29 +17,43 @@ return [
     ],
 
     [
-        'label' => 'My Activities',
+        'label' => 'Activities',
         'icon' => 'bolt',
         'children' => [
 
             [
-                'label' => 'Check In / Out',
+                'label' => 'Attendance',
                 'icon' => 'map-pin',
                 'route' => 'employee.attendances.index',
                 'permission' => 'employee_attendances.view',
             ],
 
             [
-                'label' => 'My Attendance',
+                'label' => 'Schedule',
+                'icon' => 'calendar-days',
+                'route' => 'employee.schedule',
+                'permission' => 'employee_schedule.view',
+            ],
+
+            [
+                'label' => 'Attendance History',
                 'icon' => 'document',
                 'route' => 'employee.attendance-history',
                 'permission' => 'employee_attendance-history.view',
             ],
 
             [
-                'label' => 'My Leave',
+                'label' => 'Leave',
                 'icon' => 'document',
                 'route' => 'employee.leave',
                 'permission' => 'employee_leave.view',
+            ],
+
+            [
+                'label' => 'Calendar',
+                'icon' => 'calendar-days',
+                'route' => 'employee.calendar',
+                'permission' => 'employee_calendar.view',
             ],
 
         ],

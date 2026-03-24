@@ -95,6 +95,12 @@ class RolePermissionSeeder extends Seeder
 
                 // EMPLOYEE LEAVE
                 'employee_leave.view',
+
+                // EMPLOYEE SCHEDULE
+                'employee_schedule.view',
+
+                // EMPLOYEE CALENDAR
+                'employee_calendar.view',
             ];
 
             foreach ($adminPermissions as $permission) {

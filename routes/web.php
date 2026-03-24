@@ -28,6 +28,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::livewire('leave', 'pages::employee.leave')
             ->name('leave');
 
+        Route::livewire('schedule', 'pages::employee.schedule')
+            ->name('schedule');
+
+        Route::livewire('calendar', 'pages::employee.calendar')
+            ->name('calendar');
     });
 
     /*
