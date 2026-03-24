@@ -43,6 +43,68 @@
 
     </flux:card>
 
+    {{-- TAMBAHAN SECTION DI ATAS SUMMARY (tetap mobile-first) --}}
+
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+
+        <flux:card class="p-3 text-center">
+            <div class="text-xs text-zinc-500">Present</div>
+            <div class="text-lg font-semibold">{{ $this->summary['present'] }}</div>
+        </flux:card>
+
+        <flux:card class="p-3 text-center">
+            <div class="text-xs text-zinc-500">Late</div>
+            <div class="text-lg font-semibold text-yellow-500">
+                {{ $this->summary['late'] }}
+            </div>
+        </flux:card>
+
+        <flux:card class="p-3 text-center">
+            <div class="text-xs text-zinc-500">Overtime</div>
+            <div class="text-lg font-semibold text-blue-500">
+                {{ $this->summary['overtime'] }}
+            </div>
+        </flux:card>
+
+        <flux:card class="p-3 text-center">
+            <div class="text-xs text-zinc-500">Rate</div>
+            <div class="text-lg font-semibold">
+                {{ $this->summary['attendance_rate'] }}%
+            </div>
+        </flux:card>
+
+    </div>
+
+    {{-- TAMBAHAN WORK SUMMARY --}}
+
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+
+        <flux:card class="p-4">
+
+            <flux:text class="text-xs text-zinc-500">
+                Total Work Hours
+            </flux:text>
+
+            <flux:heading size="lg">
+                {{ $this->summary['work_hours'] }} h
+            </flux:heading>
+
+        </flux:card>
+
+        <flux:card class="p-4">
+
+            <flux:text class="text-xs text-zinc-500">
+                Total Overtime
+            </flux:text>
+
+            <flux:heading size="lg">
+                {{ $this->summary['overtime_hours'] }} h
+            </flux:heading>
+
+        </flux:card>
+
+    </div>
+
     <!-- SUMMARY -->
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
 

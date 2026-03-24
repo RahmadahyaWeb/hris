@@ -55,6 +55,7 @@
                 <flux:table.column>Days</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
                 <flux:table.column>Progress</flux:table.column>
+                <flux:table.column></flux:table.column>
 
             </flux:table.columns>
 
@@ -139,6 +140,24 @@
 
                         </flux:table.cell>
 
+                        <flux:table.cell>
+
+                            <flux:dropdown>
+
+                                <flux:button size="sm" icon="ellipsis-horizontal" />
+
+                                <flux:menu>
+
+                                    <flux:menu.item icon="clock" wire:click="timeline({{ $leave->id }})">
+                                        Timeline
+                                    </flux:menu.item>
+
+                                </flux:menu>
+
+                            </flux:dropdown>
+
+                        </flux:table.cell>
+
                     </flux:table.row>
 
                 @empty
@@ -203,6 +222,70 @@
                     Submit
                 </flux:button>
             </div>
+
+        </div>
+
+    </flux:modal>
+
+    <flux:modal name="leave-timeline" class="md:w-96">
+
+        <flux:heading size="lg">
+            Approval Timeline
+        </flux:heading>
+
+        <div class="mt-4 space-y-4">
+
+            @php
+                $steps = $selectedLeave?->leaveType?->approvalSteps ?? collect();
+                $histories = $selectedLeave?->histories ?? collect();
+            @endphp
+
+            @foreach ($steps as $index => $step)
+                @php
+                    $history = $histories->firstWhere('step', $index + 1);
+                @endphp
+
+                <div class="flex items-start gap-3">
+
+                    <div class="mt-1">
+                        <div class="w-3 h-3 rounded-full {{ $history ? 'bg-green-500' : 'bg-zinc-300' }}"></div>
+                    </div>
+
+                    <div class="flex-1">
+
+                        <div class="flex items-center justify-between">
+
+                            <div class="text-sm font-medium">
+                                Step {{ $index + 1 }}
+                            </div>
+
+                            @if ($history)
+                                <flux:badge color="{{ $history->action === 'approved' ? 'green' : 'red' }}">
+                                    {{ ucfirst($history->action) }}
+                                </flux:badge>
+                            @else
+                                <flux:badge color="zinc">
+                                    Waiting
+                                </flux:badge>
+                            @endif
+
+                        </div>
+
+                        <div class="text-xs text-zinc-500 mt-1">
+
+                            @if ($history)
+                                {{ $history->approver->name ?? '-' }}<br>
+                                {{ $history->acted_at }}
+                            @else
+                                Pending approval
+                            @endif
+
+                        </div>
+
+                    </div>
+
+                </div>
+            @endforeach
 
         </div>
 

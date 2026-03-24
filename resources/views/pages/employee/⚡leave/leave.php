@@ -27,6 +27,8 @@ new class extends Component
 
     public ?string $reason = null;
 
+    public ?Leave $selectedLeave = null;
+
     protected function rules(): array
     {
         return [
@@ -106,5 +108,15 @@ new class extends Component
             DB::rollBack();
             throw $e;
         }
+    }
+
+    public function timeline(int $id): void
+    {
+        $this->selectedLeave = Leave::with([
+            'leaveType.approvalSteps',
+            'histories.approver',
+        ])->findOrFail($id);
+
+        $this->modal('leave-timeline')->show();
     }
 };

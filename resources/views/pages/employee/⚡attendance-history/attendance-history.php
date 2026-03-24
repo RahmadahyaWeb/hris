@@ -65,35 +65,26 @@ new class extends Component
             ->when($this->endDate, fn ($q) => $q->whereDate('date', '<=', $this->endDate))
             ->get();
 
-        $present = 0;
-        $late = 0;
-        $early = 0;
-        $overtime = 0;
+        $present = $attendances->whereNotNull('checkin_at')->count();
+        $late = $attendances->where('late_minutes', '>', 0)->count();
+        $early = $attendances->where('state', 'early_checkout')->count();
+        $overtime = $attendances->where('overtime_minutes', '>', 0)->count();
 
-        foreach ($attendances as $attendance) {
+        $totalWorkMinutes = $attendances->sum('work_minutes');
+        $totalOvertimeMinutes = $attendances->sum('overtime_minutes');
 
-            if ($attendance->is_present) {
-                $present++;
-            }
-
-            if ($attendance->is_late) {
-                $late++;
-            }
-
-            if ($attendance->is_early_checkout) {
-                $early++;
-            }
-
-            if ($attendance->is_overtime) {
-                $overtime++;
-            }
-        }
+        $attendanceRate = $attendances->count() > 0
+            ? round(($present / $attendances->count()) * 100, 2)
+            : 0;
 
         return [
             'present' => $present,
             'late' => $late,
             'early' => $early,
             'overtime' => $overtime,
+            'work_hours' => round($totalWorkMinutes / 60, 2),
+            'overtime_hours' => round($totalOvertimeMinutes / 60, 2),
+            'attendance_rate' => $attendanceRate,
         ];
     }
 };

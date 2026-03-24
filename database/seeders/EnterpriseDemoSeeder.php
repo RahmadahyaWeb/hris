@@ -168,7 +168,7 @@ class EnterpriseDemoSeeder extends Seeder
             );
 
             $start = Carbon::create(now()->year, 2, 1);
-            $end = Carbon::create(2026, 3, 21);
+            $end = Carbon::create(2026, 3, 23);
 
             $date = $start->copy();
 
