@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Division;
 use App\Models\EmployeeSchedule;
 use App\Models\Shift;
 use App\Models\User;
@@ -30,6 +31,14 @@ new class extends Component
 
     public ?int $deleteId = null;
 
+    public int $duration_months = 1; // 1, 6, 12
+
+    public ?int $division_id = null;
+
+    public ?int $filter_shift_id = null;
+
+    public ?int $filter_user_id = null;
+
     public function mount(): void
     {
         $this->year = now()->year;
@@ -37,12 +46,30 @@ new class extends Component
     }
 
     #[Computed]
+    public function divisions()
+    {
+        return Division::pluck('name', 'id');
+    }
+
+    #[Computed]
     public function schedules()
     {
         $this->authorize('viewAny', EmployeeSchedule::class);
 
-        return EmployeeSchedule::with(['user', 'shift'])
-            ->latest()
+        return EmployeeSchedule::with(['user.position.division', 'shift'])
+            ->when($this->filter_user_id, fn ($q) => $q->where('user_id', $this->filter_user_id)
+            )
+            ->when($this->filter_shift_id, fn ($q) => $q->where('shift_id', $this->filter_shift_id)
+            )
+            ->when($this->division_id, fn ($q) => $q->whereHas('user.position', fn ($qq) => $qq->where('division_id', $this->division_id)
+            )
+            )
+            ->join('users', 'users.id', '=', 'employee_schedules.user_id')
+            ->join('positions', 'positions.id', '=', 'users.position_id')
+            ->join('divisions', 'divisions.id', '=', 'positions.division_id')
+            ->orderBy('users.name')
+            ->orderBy('divisions.name')
+            ->select('employee_schedules.*')
             ->paginate($this->perPage);
     }
 
@@ -157,40 +184,56 @@ new class extends Component
             $user = User::findOrFail($this->user_id);
             $shift = Shift::findOrFail($this->shift_id);
 
-            $start = Carbon::create($this->year, $this->month, 1);
-            $end = $start->copy()->endOfMonth();
+            $start = Carbon::create($this->year, $this->month, 1)->startOfMonth();
 
-            $date = $start->copy();
+            $end = match ($this->duration_months) {
+                6 => $start->copy()->addMonths(5)->endOfMonth(),
+                12 => $start->copy()->addMonths(11)->endOfMonth(),
+                default => $start->copy()->endOfMonth(),
+            };
 
-            while ($date <= $end) {
+            $dates = collect();
 
-                $calendar = WorkCalendar::whereDate('date', $date)->first();
+            $cursor = $start->copy();
 
-                if ($calendar && $calendar->is_holiday) {
+            while ($cursor->lte($end)) {
 
-                    $date->addDay();
+                $dates->push($cursor->toDateString());
 
+                $cursor->addDay();
+            }
+
+            $workCalendars = WorkCalendar::whereBetween('date', [$start, $end])
+                ->pluck('is_holiday', 'date');
+
+            $payload = [];
+
+            foreach ($dates as $date) {
+
+                if ($workCalendars[$date] ?? false) {
                     continue;
                 }
 
-                EmployeeSchedule::updateOrCreate(
-                    [
-                        'user_id' => $user->id,
-                        'date' => $date->format('Y-m-d'),
-                    ],
-                    [
-                        'shift_id' => $shift->id,
-                    ]
-                );
-
-                $date->addDay();
+                $payload[] = [
+                    'user_id' => $user->id,
+                    'shift_id' => $shift->id,
+                    'date' => $date,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
+
+            EmployeeSchedule::upsert(
+                $payload,
+                ['user_id', 'date'],
+                ['shift_id', 'updated_at']
+            );
 
             DB::commit();
 
             $this->dispatch('alert', [
                 'title' => 'Success',
-                'message' => 'User schedule generated successfully',
+                'message' => 'Schedule generated successfully',
                 'variant' => 'success',
             ]);
 
