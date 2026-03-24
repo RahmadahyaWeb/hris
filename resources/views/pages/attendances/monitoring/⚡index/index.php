@@ -2,6 +2,7 @@
 
 use App\Models\Attendance;
 use App\Models\Branch;
+use App\Models\Division;
 use App\Models\EmployeeSchedule;
 use App\Services\AttendanceRuleService;
 use Carbon\Carbon;
@@ -32,6 +33,12 @@ new class extends Component
         return Branch::pluck('name', 'id');
     }
 
+    #[Computed]
+    public function divisions()
+    {
+        return Division::pluck('name', 'id');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | SUMMARY (BASED ON SCHEDULE + ATTENDANCE)
@@ -46,11 +53,15 @@ new class extends Component
         $lateTolerance = $rule->lateTolerance();
         $overtimeAfter = $rule->overtimeAfter();
 
-        $schedules = EmployeeSchedule::with(['user', 'shift'])
+        $schedules = EmployeeSchedule::with(['user.position'])
             ->whereDate('date', $this->date)
             ->when(
                 $this->branch_id,
                 fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('branch_id', $this->branch_id))
+            )
+            ->when(
+                $this->division_id,
+                fn ($q) => $q->whereHas('user.position', fn ($qq) => $qq->where('division_id', $this->division_id))
             )
             ->get();
 
@@ -58,6 +69,10 @@ new class extends Component
             ->when(
                 $this->branch_id,
                 fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('branch_id', $this->branch_id))
+            )
+            ->when(
+                $this->division_id,
+                fn ($q) => $q->whereHas('user.position', fn ($qq) => $qq->where('division_id', $this->division_id))
             )
             ->get()
             ->keyBy('user_id');
@@ -78,12 +93,6 @@ new class extends Component
                 $present++;
             }
 
-            /*
-            |--------------------------------------------------------------------------
-            | LATE WITH TOLERANCE
-            |--------------------------------------------------------------------------
-            | late_minutes > tolerance → dihitung telat
-            */
             if (($attendance->late_minutes ?? 0) > $lateTolerance) {
                 $late++;
             }
@@ -93,13 +102,11 @@ new class extends Component
             }
         }
 
-        $absent = $schedules->count() - $present;
-
         return [
             'present' => $present,
             'late' => $late,
             'overtime' => $overtime,
-            'absent' => $absent < 0 ? 0 : $absent,
+            'absent' => max($schedules->count() - $present, 0),
         ];
     }
 
@@ -127,63 +134,40 @@ new class extends Component
                 $this->branch_id,
                 fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('branch_id', $this->branch_id))
             )
+            ->when(
+                $this->division_id,
+                fn ($q) => $q->whereHas('user.position', fn ($qq) => $qq->where('division_id', $this->division_id))
+            )
             ->latest()
             ->paginate($this->perPage)
             ->through(function ($attendance) use ($lateTolerance, $overtimeAfter) {
 
-                /*
-                |--------------------------------------------------------------------------
-                | STATUS (MOVE FROM VIEW → COMPONENT)
-                |--------------------------------------------------------------------------
-                */
-
                 $statuses = [];
 
                 if (($attendance->late_minutes ?? 0) > $lateTolerance) {
-                    $statuses[] = [
-                        'label' => 'Late',
-                        'color' => 'yellow',
-                    ];
+                    $statuses[] = ['label' => 'Late', 'color' => 'yellow'];
                 }
 
                 if (($attendance->overtime_minutes ?? 0) > $overtimeAfter) {
-                    $statuses[] = [
-                        'label' => 'Overtime',
-                        'color' => 'purple',
-                    ];
+                    $statuses[] = ['label' => 'Overtime', 'color' => 'purple'];
                 }
 
                 if ($attendance->state === 'early_checkout') {
-                    $statuses[] = [
-                        'label' => 'Early Checkout',
-                        'color' => 'orange',
-                    ];
+                    $statuses[] = ['label' => 'Early Checkout', 'color' => 'orange'];
                 }
 
                 if (empty($statuses)) {
-                    $statuses[] = [
-                        'label' => 'On Time',
-                        'color' => 'green',
-                    ];
+                    $statuses[] = ['label' => 'On Time', 'color' => 'green'];
                 }
-
-                /*
-                |--------------------------------------------------------------------------
-                | BREAK (MOVE FROM VIEW → COMPONENT)
-                |--------------------------------------------------------------------------
-                */
 
                 $break = $attendance->breaks->first();
 
-                $attendance->break_label = null;
-
-                if ($break) {
-                    $attendance->break_label =
-                        Carbon::parse($break->start_at)->format('H:i')
+                $attendance->break_label = $break
+                    ? Carbon::parse($break->start_at)->format('H:i')
                         .' - '
                         .Carbon::parse($break->end_at)->format('H:i')
-                        .' ('.$break->duration_minutes.'m)';
-                }
+                        .' ('.$break->duration_minutes.'m)'
+                    : null;
 
                 $attendance->statuses = $statuses;
 
@@ -200,11 +184,15 @@ new class extends Component
     #[Computed]
     public function absents()
     {
-        $scheduled = EmployeeSchedule::with('user.branch')
+        $scheduled = EmployeeSchedule::with('user.position')
             ->whereDate('date', $this->date)
             ->when(
                 $this->branch_id,
                 fn ($q) => $q->whereHas('user', fn ($qq) => $qq->where('branch_id', $this->branch_id))
+            )
+            ->when(
+                $this->division_id,
+                fn ($q) => $q->whereHas('user.position', fn ($qq) => $qq->where('division_id', $this->division_id))
             )
             ->get();
 

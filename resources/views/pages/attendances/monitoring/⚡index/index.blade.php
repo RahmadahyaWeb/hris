@@ -22,6 +22,14 @@
                 @endforeach
             </flux:select>
 
+            <flux:select wire:model.live="division_id" class="w-full sm:w-48">
+                <option value="">All Departments</option>
+
+                @foreach ($this->divisions as $id => $name)
+                    <option value="{{ $id }}">{{ $name }}</option>
+                @endforeach
+            </flux:select>
+
         </div>
 
     </div>

@@ -21,6 +21,8 @@ new class extends Component
 
     public ?int $deleteId = null;
 
+    public ?int $parentTargetId = null;
+
     #[Computed]
     public function positions()
     {
@@ -43,6 +45,56 @@ new class extends Component
             'title' => ['required', 'string', 'max:255'],
             'division_id' => ['required', 'exists:divisions,id'],
         ];
+    }
+
+    public function setAsParent(int $id): void
+    {
+        DB::beginTransaction();
+
+        try {
+
+            $position = Position::findOrFail($id);
+
+            $this->authorize('update', $position);
+
+            /*
+            |------------------------------------------------------------
+            | VALIDATION: ONLY SAME DIVISION
+            |------------------------------------------------------------
+            */
+
+            // pastikan hanya 1 parent per division
+            Position::where('division_id', $position->division_id)
+                ->whereNull('parent_id')
+                ->where('id', '!=', $position->id)
+                ->update([
+                    'parent_id' => $position->id, // turunkan parent lama jadi child
+                ]);
+
+            /*
+            |------------------------------------------------------------
+            | SET CURRENT AS PARENT
+            |------------------------------------------------------------
+            */
+
+            $position->update([
+                'parent_id' => null,
+            ]);
+
+            DB::commit();
+
+            $this->dispatch('alert', [
+                'title' => 'Success',
+                'message' => 'Parent updated within division successfully',
+                'variant' => 'success',
+            ]);
+
+        } catch (Throwable $e) {
+
+            DB::rollBack();
+
+            throw $e;
+        }
     }
 
     public function create(): void

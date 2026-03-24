@@ -35,6 +35,7 @@
             <flux:table.columns>
                 <flux:table.column>title</flux:table.column>
                 <flux:table.column>Division</flux:table.column>
+                <flux:table.column>Status</flux:table.column>
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
 
@@ -55,6 +56,12 @@
 
                         </flux:table.cell>
 
+                        <flux:table.cell>
+                            @if (is_null($position->parent_id))
+                                <flux:badge color="green" size="sm">Parent</flux:badge>
+                            @endif
+                        </flux:table.cell>
+
                         <flux:table.cell class="text-right">
 
                             <flux:dropdown>
@@ -64,6 +71,10 @@
                                 <flux:menu>
 
                                     @can('update', $position)
+                                        <flux:menu.item icon="arrow-up" wire:click="setAsParent({{ $position->id }})">
+                                            Set as Parent
+                                        </flux:menu.item>
+
                                         <flux:menu.item icon="pencil" wire:click="edit({{ $position->id }})">
                                             Edit
                                         </flux:menu.item>
@@ -90,7 +101,7 @@
 
                     <flux:table.row>
 
-                        <flux:table.cell colspan="3">
+                        <flux:table.cell colspan="4">
 
                             <div class="flex flex-col items-center justify-center py-10">
 
