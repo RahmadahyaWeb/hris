@@ -32,41 +32,41 @@ class OrganizationSeeder extends Seeder
             ]);
 
             // ========================
-            // USERS
+            // USERS (REALISTIC NAMES)
             // ========================
-            $deptHead1 = User::create([
-                'name' => 'Head Finance',
-                'email' => 'finance.head@mail.com',
+            $budi = User::create([
+                'name' => 'Budi Santoso',
+                'email' => 'budi.santoso@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $deptHead2 = User::create([
-                'name' => 'Head HR',
-                'email' => 'hr.head@mail.com',
+            $siti = User::create([
+                'name' => 'Siti Rahmawati',
+                'email' => 'siti.rahmawati@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $employee1 = User::create([
-                'name' => 'Finance Staff 1',
-                'email' => 'finance.staff1@mail.com',
+            $andi = User::create([
+                'name' => 'Andi Pratama',
+                'email' => 'andi.pratama@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $employee2 = User::create([
-                'name' => 'Finance Staff 2',
-                'email' => 'finance.staff2@mail.com',
+            $rina = User::create([
+                'name' => 'Rina Kurniawati',
+                'email' => 'rina.kurniawati@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $employee3 = User::create([
-                'name' => 'HR Staff 1',
-                'email' => 'hr.staff1@mail.com',
+            $dedi = User::create([
+                'name' => 'Dedi Saputra',
+                'email' => 'dedi.saputra@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $employee4 = User::create([
-                'name' => 'HR Staff 2',
-                'email' => 'hr.staff2@mail.com',
+            $maya = User::create([
+                'name' => 'Maya Putri',
+                'email' => 'maya.putri@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
@@ -77,14 +77,14 @@ class OrganizationSeeder extends Seeder
                 'branch_id' => $branch->id,
                 'name' => 'Finance',
                 'code' => 'FIN',
-                'head_user_id' => $deptHead1->id,
+                'head_user_id' => $budi->id,
             ]);
 
             $hr = Department::create([
                 'branch_id' => $branch->id,
                 'name' => 'Human Resource',
                 'code' => 'HR',
-                'head_user_id' => $deptHead2->id,
+                'head_user_id' => $siti->id,
             ]);
 
             // ========================
@@ -95,7 +95,7 @@ class OrganizationSeeder extends Seeder
                 'name' => 'Finance Manager',
                 'code' => 'FIN-MGR',
                 'level' => 1,
-                'head_user_id' => $deptHead1->id,
+                'head_user_id' => $budi->id,
             ]);
 
             $financeStaff = Position::create([
@@ -103,6 +103,7 @@ class OrganizationSeeder extends Seeder
                 'name' => 'Finance Staff',
                 'code' => 'FIN-STF',
                 'level' => 2,
+                'parent_id' => $financeManager->id,
             ]);
 
             $hrManager = Position::create([
@@ -110,7 +111,7 @@ class OrganizationSeeder extends Seeder
                 'name' => 'HR Manager',
                 'code' => 'HR-MGR',
                 'level' => 1,
-                'head_user_id' => $deptHead2->id,
+                'head_user_id' => $siti->id,
             ]);
 
             $hrStaff = Position::create([
@@ -118,6 +119,7 @@ class OrganizationSeeder extends Seeder
                 'name' => 'HR Staff',
                 'code' => 'HR-STF',
                 'level' => 2,
+                'parent_id' => $hrManager->id,
             ]);
 
             // ========================
@@ -125,16 +127,16 @@ class OrganizationSeeder extends Seeder
             // ========================
             $financeTeam = Team::create([
                 'department_id' => $finance->id,
-                'name' => 'Finance Team A',
-                'code' => 'FIN-A',
-                'lead_user_id' => $deptHead1->id,
+                'name' => 'Finance Team',
+                'code' => 'FIN-T1',
+                'lead_user_id' => $budi->id,
             ]);
 
             $hrTeam = Team::create([
                 'department_id' => $hr->id,
-                'name' => 'HR Team A',
-                'code' => 'HR-A',
-                'lead_user_id' => $deptHead2->id,
+                'name' => 'HR Team',
+                'code' => 'HR-T1',
+                'lead_user_id' => $siti->id,
             ]);
 
             // ========================
@@ -142,7 +144,7 @@ class OrganizationSeeder extends Seeder
             // ========================
             EmployeeAssignment::insert([
                 [
-                    'user_id' => $deptHead1->id,
+                    'user_id' => $budi->id,
                     'branch_id' => $branch->id,
                     'department_id' => $finance->id,
                     'position_id' => $financeManager->id,
@@ -153,7 +155,7 @@ class OrganizationSeeder extends Seeder
                     'updated_at' => now(),
                 ],
                 [
-                    'user_id' => $employee1->id,
+                    'user_id' => $andi->id,
                     'branch_id' => $branch->id,
                     'department_id' => $finance->id,
                     'position_id' => $financeStaff->id,
@@ -164,7 +166,7 @@ class OrganizationSeeder extends Seeder
                     'updated_at' => now(),
                 ],
                 [
-                    'user_id' => $employee2->id,
+                    'user_id' => $rina->id,
                     'branch_id' => $branch->id,
                     'department_id' => $finance->id,
                     'position_id' => $financeStaff->id,
@@ -175,7 +177,7 @@ class OrganizationSeeder extends Seeder
                     'updated_at' => now(),
                 ],
                 [
-                    'user_id' => $deptHead2->id,
+                    'user_id' => $siti->id,
                     'branch_id' => $branch->id,
                     'department_id' => $hr->id,
                     'position_id' => $hrManager->id,
@@ -186,7 +188,7 @@ class OrganizationSeeder extends Seeder
                     'updated_at' => now(),
                 ],
                 [
-                    'user_id' => $employee3->id,
+                    'user_id' => $dedi->id,
                     'branch_id' => $branch->id,
                     'department_id' => $hr->id,
                     'position_id' => $hrStaff->id,
@@ -197,7 +199,7 @@ class OrganizationSeeder extends Seeder
                     'updated_at' => now(),
                 ],
                 [
-                    'user_id' => $employee4->id,
+                    'user_id' => $maya->id,
                     'branch_id' => $branch->id,
                     'department_id' => $hr->id,
                     'position_id' => $hrStaff->id,

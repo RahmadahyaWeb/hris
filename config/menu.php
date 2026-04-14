@@ -119,6 +119,16 @@ return [
                         'work-schedules.*', // wildcard
                     ],
                 ],
+
+                [
+                    'label' => 'Employee Schedules',
+                    'icon' => 'calendar-days',
+                    'route' => 'employee-schedules.index',
+                    'permission' => 'employee-schedule.view',
+                    'active' => [
+                        'employee-schedules.*', // wildcard
+                    ],
+                ],
             ],
         ],
 

@@ -129,7 +129,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('permission:employee-assignment.create')
                 ->name('create');
 
-            Route::livewire('/{employee-assignment}/edit', 'pages::employee-assignment.form')
+            Route::livewire('/{assignment}/edit', 'pages::employee-assignment.form')
                 ->middleware('permission:employee-assignment.update')
                 ->name('edit');
         });
@@ -165,8 +165,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('permission:work-schedule.create')
                 ->name('create');
 
-            Route::livewire('/{work-schedule}/edit', 'pages::work-schedule.form')
+            Route::livewire('/{schedule}/edit', 'pages::work-schedule.form')
                 ->middleware('permission:work-schedule.update')
+                ->name('edit');
+        });
+
+    // EMPLOYEE SCHEDULE MANAGEMENT
+    Route::prefix('employee-schedules')
+        ->name('employee-schedules.')
+        ->middleware(['permission:employee-schedule.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::employee-schedule.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::employee-schedule.form')
+                ->middleware('permission:employee-schedule.create')
+                ->name('create');
+
+            Route::livewire('/{schedule}/edit', 'pages::employee-schedule.form')
+                ->middleware('permission:employee-schedule.update')
                 ->name('edit');
         });
 });
