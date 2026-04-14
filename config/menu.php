@@ -67,6 +67,58 @@ return [
                         'departments.*', // wildcard
                     ],
                 ],
+                [
+                    'label' => 'Positions',
+                    'icon' => 'briefcase',
+                    'route' => 'positions.index',
+                    'permission' => 'position.view',
+                    'active' => [
+                        'positions.*', // wildcard
+                    ],
+                ],
+                [
+                    'label' => 'Teams',
+                    'icon' => 'rectangle-group',
+                    'route' => 'teams.index',
+                    'permission' => 'team.view',
+                    'active' => [
+                        'teams.*', // wildcard
+                    ],
+                ],
+                [
+                    'label' => 'Employee',
+                    'icon' => 'user-plus',
+                    'route' => 'employee-assignments.index',
+                    'permission' => 'employee-assignment.view',
+                    'active' => [
+                        'employee-assignments.*', // wildcard
+                    ],
+                ],
+            ],
+        ],
+
+        [
+            'heading' => 'System Settings',
+            'items' => [
+                [
+                    'label' => 'Shifts',
+                    'icon' => 'arrows-up-down',
+                    'route' => 'shifts.index',
+                    'permission' => 'shift.view',
+                    'active' => [
+                        'shifts.*', // wildcard
+                    ],
+                ],
+
+                [
+                    'label' => 'Work Schedules',
+                    'icon' => 'calendar-days',
+                    'route' => 'work-schedules.index',
+                    'permission' => 'shift.view',
+                    'active' => [
+                        'work-schedules.*', // wildcard
+                    ],
+                ],
             ],
         ],
 

@@ -43,6 +43,31 @@ class RolePermissionSeeder extends Seeder
                 'department.create',
                 'department.update',
                 'department.delete',
+
+                'position.view',
+                'position.create',
+                'position.update',
+                'position.delete',
+
+                'team.view',
+                'team.create',
+                'team.update',
+                'team.delete',
+
+                'employee-assignment.view',
+                'employee-assignment.create',
+                'employee-assignment.update',
+                'employee-assignment.delete',
+
+                'shift.view',
+                'shift.create',
+                'shift.update',
+                'shift.delete',
+
+                'work-schedule.view',
+                'work-schedule.create',
+                'work-schedule.update',
+                'work-schedule.delete',
             ];
 
             foreach ($permissions as $perm) {

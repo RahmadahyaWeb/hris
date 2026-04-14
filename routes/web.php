@@ -79,6 +79,96 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('permission:department.update')
                 ->name('edit');
         });
+
+    // POSITION MANAGEMENT
+    Route::prefix('positions')
+        ->name('positions.')
+        ->middleware(['permission:position.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::position.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::position.form')
+                ->middleware('permission:position.create')
+                ->name('create');
+
+            Route::livewire('/{position}/edit', 'pages::position.form')
+                ->middleware('permission:position.update')
+                ->name('edit');
+        });
+
+    // TEAM MANAGEMENT
+    Route::prefix('teams')
+        ->name('teams.')
+        ->middleware(['permission:team.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::team.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::team.form')
+                ->middleware('permission:team.create')
+                ->name('create');
+
+            Route::livewire('/{team}/edit', 'pages::team.form')
+                ->middleware('permission:team.update')
+                ->name('edit');
+        });
+
+    // EMPLOYEE ASSIGNMENT MANAGEMENT
+    Route::prefix('employee-assignments')
+        ->name('employee-assignments.')
+        ->middleware(['permission:employee-assignment.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::employee-assignment.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::employee-assignment.form')
+                ->middleware('permission:employee-assignment.create')
+                ->name('create');
+
+            Route::livewire('/{employee-assignment}/edit', 'pages::employee-assignment.form')
+                ->middleware('permission:employee-assignment.update')
+                ->name('edit');
+        });
+
+    // SHIFT MANAGEMENT
+    Route::prefix('shifts')
+        ->name('shifts.')
+        ->middleware(['permission:shift.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::shift.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::shift.form')
+                ->middleware('permission:shift.create')
+                ->name('create');
+
+            Route::livewire('/{shift}/edit', 'pages::shift.form')
+                ->middleware('permission:shift.update')
+                ->name('edit');
+        });
+
+    // WORK SCHEDULE MANAGEMENT
+    Route::prefix('work-schedules')
+        ->name('work-schedules.')
+        ->middleware(['permission:work-schedule.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::work-schedule.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::work-schedule.form')
+                ->middleware('permission:work-schedule.create')
+                ->name('create');
+
+            Route::livewire('/{work-schedule}/edit', 'pages::work-schedule.form')
+                ->middleware('permission:work-schedule.update')
+                ->name('edit');
+        });
 });
 
 require __DIR__.'/settings.php';
