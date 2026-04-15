@@ -129,6 +129,16 @@ return [
                         'employee-schedules.*', // wildcard
                     ],
                 ],
+
+                [
+                    'label' => 'Holidays',
+                    'icon' => 'calendar-days',
+                    'route' => 'holidays.index',
+                    'permission' => 'holiday.view',
+                    'active' => [
+                        'holidays.*', // wildcard
+                    ],
+                ],
             ],
         ],
 

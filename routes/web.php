@@ -187,6 +187,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('permission:employee-schedule.update')
                 ->name('edit');
         });
+
+    // HOLIDAY MANAGEMENT
+    Route::prefix('holidays')
+        ->name('holidays.')
+        ->middleware(['permission:holiday.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::holiday.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::holiday.form')
+                ->middleware('permission:holiday.create')
+                ->name('create');
+
+            Route::livewire('/{holiday}/edit', 'pages::holiday.form')
+                ->middleware('permission:holiday.update')
+                ->name('edit');
+        });
 });
 
 require __DIR__.'/settings.php';
