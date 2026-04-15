@@ -78,6 +78,11 @@ class RolePermissionSeeder extends Seeder
                 'holiday.create',
                 'holiday.update',
                 'holiday.delete',
+
+                'leave.view',
+                'leave.create',
+                'leave.update',
+                'leave.delete',
             ];
 
             foreach ($permissions as $perm) {

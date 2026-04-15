@@ -142,6 +142,21 @@ return [
             ],
         ],
 
+        [
+            'heading' => 'Activities',
+            'items' => [
+                [
+                    'label' => 'Leaves',
+                    'icon' => 'document',
+                    'route' => 'leaves.index',
+                    'permission' => 'leave.view',
+                    'active' => [
+                        'leaves.*', // wildcard
+                    ],
+                ],
+            ],
+        ],
+
     ],
 
 ];

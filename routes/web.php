@@ -205,6 +205,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('permission:holiday.update')
                 ->name('edit');
         });
+
+    // LEAVE MANAGEMENT
+    Route::prefix('leaves')
+        ->name('leaves.')
+        ->middleware(['permission:leave.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::leave.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::leave.form')
+                ->middleware('permission:leave.create')
+                ->name('create');
+
+            Route::livewire('/{leave}/edit', 'pages::leave.form')
+                ->middleware('permission:leave.update')
+                ->name('edit');
+        });
 });
 
 require __DIR__.'/settings.php';
