@@ -41,6 +41,8 @@ class RolePermissionSeeder extends Seeder
 
                 'leave.view', 'leave.create', 'leave.update', 'leave.delete',
                 'leave.approve',
+
+                'break-rule.view', 'break-rule.create', 'break-rule.update', 'break-rule.delete',
             ];
 
             foreach ($permissions as $perm) {

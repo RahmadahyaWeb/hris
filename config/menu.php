@@ -111,6 +111,16 @@ return [
                 ],
 
                 [
+                    'label' => 'Break Rules',
+                    'icon' => 'arrows-up-down',
+                    'route' => 'break-rules.index',
+                    'permission' => 'break-rule.view',
+                    'active' => [
+                        'break-rules.*', // wildcard
+                    ],
+                ],
+
+                [
                     'label' => 'Work Schedules',
                     'icon' => 'calendar-days',
                     'route' => 'work-schedules.index',

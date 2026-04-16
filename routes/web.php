@@ -223,6 +223,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('permission:leave.update')
                 ->name('edit');
         });
+
+    // BREAK RULE MANAGEMENT
+    Route::prefix('break-rules')
+        ->name('break-rules.')
+        ->middleware(['permission:break-rule.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::break-rule.index')
+                ->name('index');
+
+            Route::livewire('/create', 'pages::break-rule.form')
+                ->middleware('permission:break-rule.create')
+                ->name('create');
+
+            Route::livewire('/{break-rule}/edit', 'pages::break-rule.form')
+                ->middleware('permission:break-rule.update')
+                ->name('edit');
+        });
 });
 
 require __DIR__.'/settings.php';
