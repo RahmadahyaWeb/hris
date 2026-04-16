@@ -245,6 +245,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('permission:break-rule.update')
                 ->name('edit');
         });
+
+    // ATTENDANCE LOGS
+    Route::prefix('attendance-logs')
+        ->name('attendance-logs.')
+        ->middleware(['permission:attendance-log.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::attendance-log.index')
+                ->name('index');
+        });
 });
 
 require __DIR__.'/settings.php';
