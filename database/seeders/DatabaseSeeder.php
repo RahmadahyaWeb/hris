@@ -16,6 +16,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             OrganizationSeeder::class,
             AttendanceMasterSeeder::class,
+            LeaveBalanceSeeder::class,
         ]);
     }
 }

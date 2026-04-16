@@ -1,6 +1,25 @@
 <div>
-    <x-page-header title="Leaves" description="Manage leave requests, approval flow, and progress."
-        button-label="Request Leave" :button-href="route('leaves.create')" />
+    <x-page-header title="Leaves" description="Manage leave requests and track your balances." button-label="Request Leave"
+        :button-href="route('leaves.create')" />
+
+    {{-- Leave Balance Cards --}}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        @foreach ($this->balances as $balance)
+            <flux:card class="p-4">
+                <div class="text-sm text-gray-500 capitalize">
+                    {{ $balance->type }}
+                </div>
+
+                <div class="text-2xl font-semibold">
+                    {{ $balance->remaining }} days
+                </div>
+
+                <div class="text-xs text-gray-400">
+                    Used: {{ $balance->used }} / {{ $balance->quota }}
+                </div>
+            </flux:card>
+        @endforeach
+    </div>
 
     <flux:card>
         <flux:table :paginate="$this->leaves">
@@ -45,24 +64,10 @@
                         <flux:table.cell>
                             <div class="space-y-1 text-xs">
                                 @foreach ($leave->approvals as $approval)
-                                    <div class="flex items-center gap-2">
-                                        <span class="font-medium">
-                                            L{{ $approval->level }}
-                                        </span>
-
-                                        <span>
-                                            {{ $approval->approver?->name }}
-                                        </span>
-
-                                        <span
-                                            class="
-                                            {{ $approval->status === 'approved'
-                                                ? 'text-green-600'
-                                                : ($approval->status === 'rejected'
-                                                    ? 'text-red-600'
-                                                    : 'text-gray-400') }}">
-                                            ({{ $approval->status }})
-                                        </span>
+                                    <div>
+                                        L{{ $approval->level }} →
+                                        {{ $approval->approver?->name }}
+                                        ({{ $approval->status }})
                                     </div>
                                 @endforeach
                             </div>
@@ -74,7 +79,7 @@
 
                                 <flux:menu>
 
-                                    <flux:menu.item icon="eye" href="{{ route('leaves.edit', $leave) }}">
+                                    <flux:menu.item icon="eye" href="{{ route('leaves.edit', $leave->id) }}">
                                         View
                                     </flux:menu.item>
 
