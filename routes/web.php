@@ -219,6 +219,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 ->middleware('permission:leave.create')
                 ->name('create');
 
+            Route::livewire('/conflicts', 'pages::leave.conflict')
+                ->middleware('permission:leave.conflict')
+                ->name('conflicts');
+
             Route::livewire('/{leave}/edit', 'pages::leave.form')
                 ->middleware('permission:leave.update')
                 ->name('edit');

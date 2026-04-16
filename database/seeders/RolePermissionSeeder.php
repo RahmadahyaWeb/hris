@@ -40,7 +40,7 @@ class RolePermissionSeeder extends Seeder
                 'holiday.view', 'holiday.create', 'holiday.update', 'holiday.delete',
 
                 'leave.view', 'leave.create', 'leave.update', 'leave.delete',
-                'leave.approve',
+                'leave.approve', 'leave.conflict',
 
                 'break-rule.view', 'break-rule.create', 'break-rule.update', 'break-rule.delete',
             ];

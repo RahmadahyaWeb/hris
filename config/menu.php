@@ -25,7 +25,7 @@ return [
                     'route' => 'roles.index',
                     'permission' => 'role.view',
                     'active' => [
-                        'roles.*', // wildcard
+                        'roles.*',
                     ],
                 ],
             ],
@@ -40,7 +40,7 @@ return [
                     'route' => 'users.index',
                     'permission' => 'user.view',
                     'active' => [
-                        'users.*', // wildcard
+                        'users.*',
                     ],
                 ],
             ],
@@ -54,115 +54,96 @@ return [
                     'icon' => 'building-office-2',
                     'route' => 'branches.index',
                     'permission' => 'branch.view',
-                    'active' => [
-                        'branches.*', // wildcard
-                    ],
+                    'active' => ['branches.*'],
                 ],
                 [
                     'label' => 'Departments',
                     'icon' => 'building-office',
                     'route' => 'departments.index',
                     'permission' => 'department.view',
-                    'active' => [
-                        'departments.*', // wildcard
-                    ],
+                    'active' => ['departments.*'],
                 ],
                 [
                     'label' => 'Positions',
                     'icon' => 'briefcase',
                     'route' => 'positions.index',
                     'permission' => 'position.view',
-                    'active' => [
-                        'positions.*', // wildcard
-                    ],
+                    'active' => ['positions.*'],
                 ],
                 [
                     'label' => 'Teams',
                     'icon' => 'rectangle-group',
                     'route' => 'teams.index',
                     'permission' => 'team.view',
-                    'active' => [
-                        'teams.*', // wildcard
-                    ],
+                    'active' => ['teams.*'],
                 ],
                 [
                     'label' => 'Employee',
                     'icon' => 'user-plus',
                     'route' => 'employee-assignments.index',
                     'permission' => 'employee-assignment.view',
-                    'active' => [
-                        'employee-assignments.*', // wildcard
-                    ],
+                    'active' => ['employee-assignments.*'],
                 ],
             ],
         ],
 
         [
-            'heading' => 'System Settings',
+            'heading' => 'Work & Attendance',
             'items' => [
                 [
                     'label' => 'Shifts',
-                    'icon' => 'arrows-up-down',
+                    'icon' => 'clock',
                     'route' => 'shifts.index',
                     'permission' => 'shift.view',
-                    'active' => [
-                        'shifts.*', // wildcard
-                    ],
+                    'active' => ['shifts.*'],
                 ],
-
                 [
                     'label' => 'Break Rules',
-                    'icon' => 'arrows-up-down',
+                    'icon' => 'pause',
                     'route' => 'break-rules.index',
                     'permission' => 'break-rule.view',
-                    'active' => [
-                        'break-rules.*', // wildcard
-                    ],
+                    'active' => ['break-rules.*'],
                 ],
-
                 [
                     'label' => 'Work Schedules',
                     'icon' => 'calendar-days',
                     'route' => 'work-schedules.index',
-                    'permission' => 'shift.view',
-                    'active' => [
-                        'work-schedules.*', // wildcard
-                    ],
+                    'permission' => 'work-schedule.view',
+                    'active' => ['work-schedules.*'],
                 ],
-
                 [
                     'label' => 'Employee Schedules',
-                    'icon' => 'calendar-days',
+                    'icon' => 'calendar',
                     'route' => 'employee-schedules.index',
                     'permission' => 'employee-schedule.view',
-                    'active' => [
-                        'employee-schedules.*', // wildcard
-                    ],
+                    'active' => ['employee-schedules.*'],
                 ],
-
                 [
                     'label' => 'Holidays',
-                    'icon' => 'calendar-days',
+                    'icon' => 'calendar',
                     'route' => 'holidays.index',
                     'permission' => 'holiday.view',
-                    'active' => [
-                        'holidays.*', // wildcard
-                    ],
+                    'active' => ['holidays.*'],
                 ],
             ],
         ],
 
         [
-            'heading' => 'Activities',
+            'heading' => 'Leave Management',
             'items' => [
                 [
                     'label' => 'Leaves',
-                    'icon' => 'document',
+                    'icon' => 'document-text',
                     'route' => 'leaves.index',
                     'permission' => 'leave.view',
-                    'active' => [
-                        'leaves.*', // wildcard
-                    ],
+                    'active' => ['leaves.index', 'leaves.create', 'leaves.edit'],
+                ],
+                [
+                    'label' => 'Leave Conflicts',
+                    'icon' => 'exclamation-triangle',
+                    'route' => 'leaves.conflicts',
+                    'permission' => 'leave.view',
+                    'active' => ['leaves.conflicts'],
                 ],
             ],
         ],
