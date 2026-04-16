@@ -32,41 +32,54 @@ class OrganizationSeeder extends Seeder
             ]);
 
             // ========================
-            // USERS (REALISTIC NAMES)
+            // USERS
             // ========================
-            $budi = User::create([
+            $financeHead = User::create([
                 'name' => 'Budi Santoso',
-                'email' => 'budi.santoso@mail.com',
+                'email' => 'budi.finance@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $siti = User::create([
-                'name' => 'Siti Rahmawati',
-                'email' => 'siti.rahmawati@mail.com',
-                'password' => Hash::make('password'),
-            ]);
-
-            $andi = User::create([
+            $financeManager = User::create([
                 'name' => 'Andi Pratama',
-                'email' => 'andi.pratama@mail.com',
+                'email' => 'andi.finance@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $rina = User::create([
+            $financeStaff = User::create([
                 'name' => 'Rina Kurniawati',
-                'email' => 'rina.kurniawati@mail.com',
+                'email' => 'rina.finance@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $dedi = User::create([
+            $itHead = User::create([
                 'name' => 'Dedi Saputra',
-                'email' => 'dedi.saputra@mail.com',
+                'email' => 'dedi.it@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
-            $maya = User::create([
+            $itManager = User::create([
                 'name' => 'Maya Putri',
-                'email' => 'maya.putri@mail.com',
+                'email' => 'maya.it@mail.com',
+                'password' => Hash::make('password'),
+            ]);
+
+            $itStaff = User::create([
+                'name' => 'Rizky Hidayat',
+                'email' => 'rizky.it@mail.com',
+                'password' => Hash::make('password'),
+            ]);
+
+            // HR (2 orang saja)
+            $hrManager = User::create([
+                'name' => 'Siti Rahmawati',
+                'email' => 'siti.hr@mail.com',
+                'password' => Hash::make('password'),
+            ]);
+
+            $hrStaff = User::create([
+                'name' => 'Fajar Nugroho',
+                'email' => 'fajar.hr@mail.com',
                 'password' => Hash::make('password'),
             ]);
 
@@ -77,49 +90,75 @@ class OrganizationSeeder extends Seeder
                 'branch_id' => $branch->id,
                 'name' => 'Finance',
                 'code' => 'FIN',
-                'head_user_id' => $budi->id,
+                'head_user_id' => $financeHead->id,
+            ]);
+
+            $it = Department::create([
+                'branch_id' => $branch->id,
+                'name' => 'IT',
+                'code' => 'IT',
+                'head_user_id' => $itHead->id,
             ]);
 
             $hr = Department::create([
                 'branch_id' => $branch->id,
                 'name' => 'Human Resource',
                 'code' => 'HR',
-                'head_user_id' => $siti->id,
+                'head_user_id' => $hrManager->id,
             ]);
 
             // ========================
             // POSITIONS
             // ========================
-            $financeManager = Position::create([
+            // Finance
+            $financeMgr = Position::create([
                 'department_id' => $finance->id,
                 'name' => 'Finance Manager',
                 'code' => 'FIN-MGR',
                 'level' => 1,
-                'head_user_id' => $budi->id,
+                'head_user_id' => $financeManager->id,
             ]);
 
-            $financeStaff = Position::create([
+            $financeStf = Position::create([
                 'department_id' => $finance->id,
                 'name' => 'Finance Staff',
                 'code' => 'FIN-STF',
                 'level' => 2,
-                'parent_id' => $financeManager->id,
+                'parent_id' => $financeMgr->id,
             ]);
 
-            $hrManager = Position::create([
+            // IT
+            $itMgr = Position::create([
+                'department_id' => $it->id,
+                'name' => 'IT Manager',
+                'code' => 'IT-MGR',
+                'level' => 1,
+                'head_user_id' => $itManager->id,
+            ]);
+
+            $itStf = Position::create([
+                'department_id' => $it->id,
+                'name' => 'IT Staff',
+                'code' => 'IT-STF',
+                'level' => 2,
+                'parent_id' => $itMgr->id,
+            ]);
+
+            // HR
+            $hrMgr = Position::create([
                 'department_id' => $hr->id,
                 'name' => 'HR Manager',
                 'code' => 'HR-MGR',
                 'level' => 1,
-                'head_user_id' => $siti->id,
+                'head_user_id' => $hrManager->id,
             ]);
 
-            $hrStaff = Position::create([
+            $hrStf = Position::create([
                 'department_id' => $hr->id,
                 'name' => 'HR Staff',
                 'code' => 'HR-STF',
                 'level' => 2,
-                'parent_id' => $hrManager->id,
+                'parent_id' => $hrMgr->id,
             ]);
 
             // ========================
@@ -129,25 +168,33 @@ class OrganizationSeeder extends Seeder
                 'department_id' => $finance->id,
                 'name' => 'Finance Team',
                 'code' => 'FIN-T1',
-                'lead_user_id' => $budi->id,
+                'lead_user_id' => $financeManager->id,
+            ]);
+
+            $itTeam = Team::create([
+                'department_id' => $it->id,
+                'name' => 'IT Team',
+                'code' => 'IT-T1',
+                'lead_user_id' => $itManager->id,
             ]);
 
             $hrTeam = Team::create([
                 'department_id' => $hr->id,
                 'name' => 'HR Team',
                 'code' => 'HR-T1',
-                'lead_user_id' => $siti->id,
+                'lead_user_id' => $hrManager->id,
             ]);
 
             // ========================
             // ASSIGNMENTS
             // ========================
             EmployeeAssignment::insert([
+                // Finance
                 [
-                    'user_id' => $budi->id,
+                    'user_id' => $financeHead->id,
                     'branch_id' => $branch->id,
                     'department_id' => $finance->id,
-                    'position_id' => $financeManager->id,
+                    'position_id' => $financeMgr->id,
                     'team_id' => $financeTeam->id,
                     'start_date' => now(),
                     'is_active' => true,
@@ -155,10 +202,10 @@ class OrganizationSeeder extends Seeder
                     'updated_at' => now(),
                 ],
                 [
-                    'user_id' => $andi->id,
+                    'user_id' => $financeManager->id,
                     'branch_id' => $branch->id,
                     'department_id' => $finance->id,
-                    'position_id' => $financeStaff->id,
+                    'position_id' => $financeMgr->id,
                     'team_id' => $financeTeam->id,
                     'start_date' => now(),
                     'is_active' => true,
@@ -166,21 +213,58 @@ class OrganizationSeeder extends Seeder
                     'updated_at' => now(),
                 ],
                 [
-                    'user_id' => $rina->id,
+                    'user_id' => $financeStaff->id,
                     'branch_id' => $branch->id,
                     'department_id' => $finance->id,
-                    'position_id' => $financeStaff->id,
+                    'position_id' => $financeStf->id,
                     'team_id' => $financeTeam->id,
                     'start_date' => now(),
                     'is_active' => true,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ],
+
+                // IT
                 [
-                    'user_id' => $siti->id,
+                    'user_id' => $itHead->id,
+                    'branch_id' => $branch->id,
+                    'department_id' => $it->id,
+                    'position_id' => $itMgr->id,
+                    'team_id' => $itTeam->id,
+                    'start_date' => now(),
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'user_id' => $itManager->id,
+                    'branch_id' => $branch->id,
+                    'department_id' => $it->id,
+                    'position_id' => $itMgr->id,
+                    'team_id' => $itTeam->id,
+                    'start_date' => now(),
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+                [
+                    'user_id' => $itStaff->id,
+                    'branch_id' => $branch->id,
+                    'department_id' => $it->id,
+                    'position_id' => $itStf->id,
+                    'team_id' => $itTeam->id,
+                    'start_date' => now(),
+                    'is_active' => true,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ],
+
+                // HR
+                [
+                    'user_id' => $hrManager->id,
                     'branch_id' => $branch->id,
                     'department_id' => $hr->id,
-                    'position_id' => $hrManager->id,
+                    'position_id' => $hrMgr->id,
                     'team_id' => $hrTeam->id,
                     'start_date' => now(),
                     'is_active' => true,
@@ -188,21 +272,10 @@ class OrganizationSeeder extends Seeder
                     'updated_at' => now(),
                 ],
                 [
-                    'user_id' => $dedi->id,
+                    'user_id' => $hrStaff->id,
                     'branch_id' => $branch->id,
                     'department_id' => $hr->id,
-                    'position_id' => $hrStaff->id,
-                    'team_id' => $hrTeam->id,
-                    'start_date' => now(),
-                    'is_active' => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ],
-                [
-                    'user_id' => $maya->id,
-                    'branch_id' => $branch->id,
-                    'department_id' => $hr->id,
-                    'position_id' => $hrStaff->id,
+                    'position_id' => $hrStf->id,
                     'team_id' => $hrTeam->id,
                     'start_date' => now(),
                     'is_active' => true,

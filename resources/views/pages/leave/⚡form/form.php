@@ -1,7 +1,10 @@
 <?php
 
+use App\Models\Department;
+use App\Models\EmployeeAssignment;
 use App\Models\Leave;
 use App\Models\LeaveApproval;
+use App\Models\Position;
 use App\Models\User;
 use App\Traits\AuthorizesCrud;
 use Flux\Flux;
@@ -23,9 +26,13 @@ new class extends Component
 
     public $reason;
 
+    public $previewApprovers = [];
+
     public function mount(?Leave $leave = null)
     {
-        if ($leave && $leave->exists) {
+        if ($leave) {
+            $leave = Leave::with('approvals.approver')->findOrFail($leave->id);
+
             $this->authorizeUpdate($leave);
 
             $this->leave = $leave;
@@ -34,9 +41,49 @@ new class extends Component
             $this->start_date = $leave->start_date;
             $this->end_date = $leave->end_date;
             $this->reason = $leave->reason;
-        } else {
-            $this->authorizeStore(Leave::class);
+
+            return;
         }
+
+        $this->authorizeStore(Leave::class);
+
+        $this->generatePreviewApprovers();
+    }
+
+    public function generatePreviewApprovers()
+    {
+        $assignment = EmployeeAssignment::where('user_id', Auth::id())
+            ->where('is_active', true)
+            ->first();
+
+        if (! $assignment) {
+            return;
+        }
+
+        $approvers = collect();
+
+        $position = Position::with('parent')->find($assignment->position_id);
+        if ($position?->parent?->head_user_id) {
+            $approvers->push($position->parent->head_user_id);
+        }
+
+        $department = Department::find($assignment->department_id);
+        if ($department?->head_user_id) {
+            $approvers->push($department->head_user_id);
+        }
+
+        // ambil HR Manager (level 1)
+        $hrManagerPosition = Position::where('code', 'HR-MGR')->first();
+
+        $hrManagerUserId = EmployeeAssignment::where('position_id', $hrManagerPosition->id)
+            ->where('is_active', true)
+            ->value('user_id');
+
+        if ($hrManagerUserId) {
+            $approvers->push($hrManagerUserId);
+        }
+
+        $this->previewApprovers = User::whereIn('id', $approvers->unique())->pluck('name')->toArray();
     }
 
     public function save()
@@ -57,14 +104,15 @@ new class extends Component
                 'reason' => $this->reason,
             ]);
 
-            // generate approval sederhana (2 level)
-            $approvers = User::whereHas('roles', fn ($q) => $q->where('name', 'super_admin'))->take(2)->get();
+            $this->generatePreviewApprovers();
 
-            foreach ($approvers as $i => $approver) {
+            foreach ($this->previewApprovers as $index => $name) {
+                $user = User::where('name', $name)->first();
+
                 LeaveApproval::create([
                     'leave_id' => $leave->id,
-                    'approver_id' => $approver->id,
-                    'level' => $i + 1,
+                    'approver_id' => $user->id,
+                    'level' => $index + 1,
                 ]);
             }
 

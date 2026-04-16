@@ -16,8 +16,6 @@ new #[Title('Leaves')] class extends Component
     use AuthorizesCrud;
     use WithoutUrlPagination, WithPagination;
 
-    public $deleteId;
-
     public function mount()
     {
         $this->authorizeIndex(Leave::class);
@@ -41,16 +39,24 @@ new #[Title('Leaves')] class extends Component
     {
         $this->transaction(function () use ($approvalId) {
 
-            $approval = LeaveApproval::findOrFail($approvalId);
+            $approval = LeaveApproval::with('leave.approvals')->findOrFail($approvalId);
 
             $this->authorizeUpdate($approval->leave);
+
+            $blocked = $approval->leave->approvals()
+                ->where('level', '<', $approval->level)
+                ->where('status', '!=', 'approved')
+                ->exists();
+
+            if ($blocked) {
+                throw new Exception('Approval must be sequential');
+            }
 
             $approval->update([
                 'status' => 'approved',
                 'approved_at' => now(),
             ]);
 
-            // cek semua approval
             $pending = $approval->leave->approvals()->where('status', 'pending')->exists();
 
             if (! $pending) {

@@ -1,15 +1,16 @@
 <div>
-    <x-page-header title="Leaves" description="Manage leave requests and approvals." button-label="Request Leave"
-        :button-href="route('leaves.create')" />
+    <x-page-header title="Leaves" description="Manage leave requests, approval flow, and progress."
+        button-label="Request Leave" :button-href="route('leaves.create')" />
 
     <flux:card>
         <flux:table :paginate="$this->leaves">
+
             <flux:table.columns>
                 <flux:table.column>Employee</flux:table.column>
                 <flux:table.column>Type</flux:table.column>
                 <flux:table.column>Period</flux:table.column>
                 <flux:table.column>Status</flux:table.column>
-                <flux:table.column>Approval</flux:table.column>
+                <flux:table.column>Approval Flow</flux:table.column>
                 <flux:table.column></flux:table.column>
             </flux:table.columns>
 
@@ -42,11 +43,29 @@
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            @php
-                                $approved = $leave->approvals->where('status', 'approved')->count();
-                                $total = $leave->approvals->count();
-                            @endphp
-                            {{ $approved }}/{{ $total }}
+                            <div class="space-y-1 text-xs">
+                                @foreach ($leave->approvals as $approval)
+                                    <div class="flex items-center gap-2">
+                                        <span class="font-medium">
+                                            L{{ $approval->level }}
+                                        </span>
+
+                                        <span>
+                                            {{ $approval->approver?->name }}
+                                        </span>
+
+                                        <span
+                                            class="
+                                            {{ $approval->status === 'approved'
+                                                ? 'text-green-600'
+                                                : ($approval->status === 'rejected'
+                                                    ? 'text-red-600'
+                                                    : 'text-gray-400') }}">
+                                            ({{ $approval->status }})
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
                         </flux:table.cell>
 
                         <flux:table.cell align="end">
@@ -60,16 +79,24 @@
                                     </flux:menu.item>
 
                                     @foreach ($leave->approvals as $approval)
-                                        @if ($approval->approver_id === auth()->id() && $approval->status === 'pending')
+                                        @php
+                                            $canApprove =
+                                                $approval->approver_id === auth()->id() &&
+                                                $approval->status === 'pending' &&
+                                                !$leave->approvals
+                                                    ->where('level', '<', $approval->level)
+                                                    ->where('status', '!=', 'approved')
+                                                    ->count();
+                                        @endphp
+
+                                        @if ($canApprove)
                                             <flux:menu.separator />
 
-                                            <flux:menu.item icon="check" variant="success"
-                                                wire:click="approve({{ $approval->id }})">
+                                            <flux:menu.item icon="check" wire:click="approve({{ $approval->id }})">
                                                 Approve
                                             </flux:menu.item>
 
-                                            <flux:menu.item icon="x-mark" variant="danger"
-                                                wire:click="reject({{ $approval->id }})">
+                                            <flux:menu.item icon="x-mark" wire:click="reject({{ $approval->id }})">
                                                 Reject
                                             </flux:menu.item>
                                         @endif
@@ -88,6 +115,7 @@
                     </flux:table.row>
                 @endforelse
             </flux:table.rows>
+
         </flux:table>
     </flux:card>
 </div>
