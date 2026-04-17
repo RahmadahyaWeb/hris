@@ -18,4 +18,9 @@
     [x-cloak] {
         display: none !important;
     }
+
+    #attendance-map {
+        position: relative;
+        z-index: 0;
+    }
 </style>

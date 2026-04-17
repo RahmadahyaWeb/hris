@@ -45,6 +45,8 @@ class RolePermissionSeeder extends Seeder
                 'break-rule.view', 'break-rule.create', 'break-rule.update', 'break-rule.delete',
 
                 'attendance-log.view',
+
+                'my-attendance.view',
             ];
 
             foreach ($permissions as $perm) {
@@ -70,6 +72,8 @@ class RolePermissionSeeder extends Seeder
             $head->syncPermissions([
                 'leave.view',
                 'leave.approve',
+
+                'my-attendance.view',
             ]);
 
             // HR (lebih luas dari head karena kontrol policy)
@@ -79,12 +83,16 @@ class RolePermissionSeeder extends Seeder
                 'holiday.view',
                 'holiday.create',
                 'holiday.update',
+
+                'my-attendance.view',
             ]);
 
             // EMPLOYEE
             $employee->syncPermissions([
                 'leave.view',
                 'leave.create',
+
+                'my-attendance.view',
             ]);
 
             // ========================

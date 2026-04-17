@@ -255,6 +255,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::livewire('/', 'pages::attendance-log.index')
                 ->name('index');
         });
+
+    // MY ATTENDANCE
+    Route::prefix('my-attendances')
+        ->name('my-attendances.')
+        ->middleware(['permission:my-attendance.view'])
+        ->group(function () {
+
+            Route::livewire('/', 'pages::my-attendance.index')
+                ->name('index');
+        });
 });
 
 require __DIR__.'/settings.php';

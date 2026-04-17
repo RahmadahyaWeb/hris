@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\BreakRule;
 use App\Models\EmployeeSchedule;
 use App\Models\Shift;
 use App\Models\User;
@@ -39,6 +40,48 @@ class AttendanceMasterSeeder extends Seeder
                 'is_overnight' => true,
                 'tolerance_late' => 10,
                 'tolerance_early_leave' => 10,
+            ]);
+
+            // ========================
+            // BREAK RULES
+            // ========================
+
+            // Morning Shift Breaks
+            BreakRule::create([
+                'shift_id' => $morning->id,
+                'name' => 'Lunch Break',
+                'start_time' => '12:00:00',
+                'end_time' => '13:00:00',
+                'duration_minutes' => 60,
+                'is_paid' => false,
+                'is_flexible' => false,
+            ]);
+
+            BreakRule::create([
+                'shift_id' => $morning->id,
+                'name' => 'Short Break',
+                'duration_minutes' => 15,
+                'is_paid' => true,
+                'is_flexible' => true,
+            ]);
+
+            // Night Shift Breaks
+            BreakRule::create([
+                'shift_id' => $night->id,
+                'name' => 'Night Break',
+                'start_time' => '02:00:00',
+                'end_time' => '03:00:00',
+                'duration_minutes' => 60,
+                'is_paid' => false,
+                'is_flexible' => false,
+            ]);
+
+            BreakRule::create([
+                'shift_id' => $night->id,
+                'name' => 'Short Break',
+                'duration_minutes' => 15,
+                'is_paid' => true,
+                'is_flexible' => true,
             ]);
 
             // ========================

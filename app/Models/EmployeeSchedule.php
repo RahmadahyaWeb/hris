@@ -15,6 +15,8 @@ class EmployeeSchedule extends Model
     ];
 
     protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
         'is_active' => 'boolean',
     ];
 
@@ -23,8 +25,8 @@ class EmployeeSchedule extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function schedule()
+    public function workSchedule()
     {
-        return $this->belongsTo(WorkSchedule::class, 'work_schedule_id');
+        return $this->belongsTo(WorkSchedule::class);
     }
 }

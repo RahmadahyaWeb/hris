@@ -142,8 +142,21 @@ return [
                     'label' => 'Leave Conflicts',
                     'icon' => 'exclamation-triangle',
                     'route' => 'leaves.conflicts',
-                    'permission' => 'leave.view',
+                    'permission' => 'leave.conflict',
                     'active' => ['leaves.conflicts'],
+                ],
+            ],
+        ],
+
+        [
+            'heading' => 'Activities',
+            'items' => [
+                [
+                    'label' => 'My Attendances',
+                    'icon' => 'document-text',
+                    'route' => 'my-attendances.index',
+                    'permission' => 'my-attendance.view',
+                    'active' => ['my-attendances.*'],
                 ],
             ],
         ],
