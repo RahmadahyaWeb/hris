@@ -47,6 +47,8 @@ class RolePermissionSeeder extends Seeder
                 'attendance-log.view',
 
                 'my-attendance.view',
+
+                'attendance-monitoring.view',
             ];
 
             foreach ($permissions as $perm) {

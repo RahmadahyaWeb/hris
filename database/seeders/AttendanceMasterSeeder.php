@@ -57,14 +57,6 @@ class AttendanceMasterSeeder extends Seeder
                 'is_flexible' => false,
             ]);
 
-            BreakRule::create([
-                'shift_id' => $morning->id,
-                'name' => 'Short Break',
-                'duration_minutes' => 15,
-                'is_paid' => true,
-                'is_flexible' => true,
-            ]);
-
             // Night Shift Breaks
             BreakRule::create([
                 'shift_id' => $night->id,
@@ -74,14 +66,6 @@ class AttendanceMasterSeeder extends Seeder
                 'duration_minutes' => 60,
                 'is_paid' => false,
                 'is_flexible' => false,
-            ]);
-
-            BreakRule::create([
-                'shift_id' => $night->id,
-                'name' => 'Short Break',
-                'duration_minutes' => 15,
-                'is_paid' => true,
-                'is_flexible' => true,
             ]);
 
             // ========================

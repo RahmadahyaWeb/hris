@@ -264,6 +264,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::livewire('/', 'pages::my-attendance.index')
                 ->name('index');
+
+            Route::livewire('/history', 'pages::my-attendance-history.index')
+                ->name('history');
+        });
+
+    // ATTENDANCE MONITORING
+    Route::middleware(['auth'])
+        ->name('attendance-monitoring.')
+        ->middleware(['permission:attendance-monitoring.view'])
+        ->prefix('attendance-monitoring')
+        ->group(function () {
+            Route::livewire('/', 'pages::attendance-monitoring.index')
+                ->name('index');
         });
 });
 

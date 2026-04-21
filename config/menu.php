@@ -87,8 +87,29 @@ return [
             ],
         ],
 
+        // DIPINDAHKAN KE ATAS (OPERASIONAL USER)
         [
-            'heading' => 'Work & Attendance',
+            'heading' => 'My Activities',
+            'items' => [
+                [
+                    'label' => 'My Attendance',
+                    'icon' => 'document-text',
+                    'route' => 'my-attendances.index',
+                    'permission' => 'my-attendance.view',
+                    'active' => ['my-attendances.index'],
+                ],
+                [
+                    'label' => 'Attendance History',
+                    'icon' => 'document-text',
+                    'route' => 'my-attendances.history',
+                    'permission' => 'my-attendance.view',
+                    'active' => ['my-attendances.history'],
+                ],
+            ],
+        ],
+
+        [
+            'heading' => 'Work Configuration',
             'items' => [
                 [
                     'label' => 'Shifts',
@@ -132,7 +153,7 @@ return [
             'heading' => 'Leave Management',
             'items' => [
                 [
-                    'label' => 'Leaves',
+                    'label' => 'Leave Requests',
                     'icon' => 'document-text',
                     'route' => 'leaves.index',
                     'permission' => 'leave.view',
@@ -149,14 +170,14 @@ return [
         ],
 
         [
-            'heading' => 'Activities',
+            'heading' => 'Monitoring',
             'items' => [
                 [
-                    'label' => 'My Attendances',
-                    'icon' => 'document-text',
-                    'route' => 'my-attendances.index',
-                    'permission' => 'my-attendance.view',
-                    'active' => ['my-attendances.*'],
+                    'label' => 'Attendance Monitoring',
+                    'icon' => 'computer-desktop',
+                    'route' => 'attendance-monitoring.index',
+                    'permission' => 'attendance-monitoring.view',
+                    'active' => ['attendance-monitoring.*'],
                 ],
             ],
         ],

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Attendance;
 use App\Models\AttendanceLog;
 use App\Models\BreakRule;
 use App\Models\EmployeeAssignment;
@@ -11,19 +12,17 @@ use App\Models\Leave;
 use App\Models\WorkScheduleDay;
 use Carbon\Carbon;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceService
 {
     public function getTodayLogs(int $userId)
     {
-        $today = now()->toDateString();
-        $tomorrow = now()->addDay()->toDateString();
+        $start = now()->startOfDay();
+        $end = now()->endOfDay()->addDay();
 
         return AttendanceLog::where('user_id', $userId)
-            ->where(function ($q) use ($today, $tomorrow) {
-                $q->whereDate('recorded_at', $today)
-                    ->orWhereDate('recorded_at', $tomorrow);
-            })
+            ->whereBetween('recorded_at', [$start, $end])
             ->orderBy('recorded_at')
             ->get();
     }
@@ -35,21 +34,22 @@ class AttendanceService
         $checkin = $logs->firstWhere('type', 'checkin');
         $checkout = $logs->where('type', 'checkout')->last();
 
-        $breakStartCount = $logs->where('type', 'break_start')->count();
-        $breakEndCount = $logs->where('type', 'break_end')->count();
-
-        $isOnBreak = $breakStartCount > $breakEndCount;
+        $breakStart = $logs->where('type', 'break_start')->count();
+        $breakEnd = $logs->where('type', 'break_end')->count();
 
         return [
             'has_checkin' => (bool) $checkin,
             'has_checkout' => (bool) $checkout,
-            'is_on_break' => $isOnBreak,
+            'is_on_break' => $breakStart > $breakEnd,
             'checkin_at' => $checkin?->recorded_at,
             'checkout_at' => $checkout?->recorded_at,
             'logs' => $logs,
         ];
     }
 
+    // ======================
+    // UI HELPERS
+    // ======================
     public function canCheckIn(array $state): bool
     {
         return ! $state['has_checkin'];
@@ -72,52 +72,65 @@ class AttendanceService
         return $state['is_on_break'];
     }
 
+    // ======================
+    // ACTIONS
+    // ======================
     public function checkIn(int $userId, ?float $lat, ?float $lng)
     {
-        $state = $this->getState($userId);
+        return DB::transaction(function () use ($userId, $lat, $lng) {
 
-        if (! $this->canCheckIn($state)) {
-            throw new Exception('Already checked in');
-        }
+            $state = $this->getState($userId);
 
-        $this->ensureLocation($lat, $lng);
-        $this->validateWorkingDay($userId);
-        $this->validateHoliday($userId);
-        $this->validateLeave($userId);
-        $this->validateShiftTime($userId, 'checkin');
-        $this->validateGps($userId, $lat, $lng);
+            if (! $this->canCheckIn($state)) {
+                throw new Exception('Already checked in');
+            }
 
-        return AttendanceLog::create([
-            'user_id' => $userId,
-            'type' => 'checkin',
-            'latitude' => $lat,
-            'longitude' => $lng,
-            'recorded_at' => now(),
-        ]);
+            $this->ensureLocation($lat, $lng);
+            $this->validateWorkingDay($userId);
+            $this->validateHolidayToday();
+            $this->validateLeaveToday($userId);
+            $this->validateShiftTime($userId);
+            $this->validateGps($userId, $lat, $lng);
+
+            return AttendanceLog::create([
+                'user_id' => $userId,
+                'type' => 'checkin',
+                'latitude' => $lat,
+                'longitude' => $lng,
+                'recorded_at' => now(),
+            ]);
+        });
     }
 
     public function checkOut(int $userId, ?float $lat, ?float $lng)
     {
-        $state = $this->getState($userId);
+        return DB::transaction(function () use ($userId, $lat, $lng) {
 
-        if (! $this->canCheckOut($state)) {
-            throw new Exception('Cannot checkout');
-        }
+            $state = $this->getState($userId);
 
-        $this->ensureLocation($lat, $lng);
-        $this->validateWorkingDay($userId);
-        $this->validateHoliday($userId);
-        $this->validateLeave($userId);
-        $this->validateShiftTime($userId, 'checkout');
-        $this->validateGps($userId, $lat, $lng);
+            if (! $this->canCheckOut($state)) {
+                throw new Exception('Cannot checkout');
+            }
 
-        return AttendanceLog::create([
-            'user_id' => $userId,
-            'type' => 'checkout',
-            'latitude' => $lat,
-            'longitude' => $lng,
-            'recorded_at' => now(),
-        ]);
+            $this->ensureLocation($lat, $lng);
+            $this->validateWorkingDay($userId);
+            $this->validateHolidayToday();
+            $this->validateLeaveToday($userId);
+            $this->validateShiftTime($userId);
+            $this->validateGps($userId, $lat, $lng);
+
+            $log = AttendanceLog::create([
+                'user_id' => $userId,
+                'type' => 'checkout',
+                'latitude' => $lat,
+                'longitude' => $lng,
+                'recorded_at' => now(),
+            ]);
+
+            $this->processDaily($userId, now()->toDateString());
+
+            return $log;
+        });
     }
 
     public function startBreak(int $userId, ?float $lat, ?float $lng)
@@ -129,11 +142,7 @@ class AttendanceService
         }
 
         $this->ensureLocation($lat, $lng);
-        $this->validateWorkingDay($userId);
-        $this->validateHoliday($userId);
-        $this->validateLeave($userId);
         $this->validateGps($userId, $lat, $lng);
-
         $this->validateBreakRule($userId);
 
         return AttendanceLog::create([
@@ -156,20 +165,6 @@ class AttendanceService
         $this->ensureLocation($lat, $lng);
         $this->validateGps($userId, $lat, $lng);
 
-        $rule = $this->validateBreakRule($userId);
-
-        $logs = $this->getTodayLogs($userId);
-        $lastBreakStart = $logs->where('type', 'break_start')->last();
-
-        if ($rule->duration_minutes && $lastBreakStart) {
-            $start = Carbon::parse($lastBreakStart->recorded_at);
-            $duration = $start->diffInMinutes(now());
-
-            if ($duration > $rule->duration_minutes) {
-                throw new Exception('Break exceeded allowed duration');
-            }
-        }
-
         return AttendanceLog::create([
             'user_id' => $userId,
             'type' => 'break_end',
@@ -179,43 +174,166 @@ class AttendanceService
         ]);
     }
 
-    protected function ensureLocation(?float $lat, ?float $lng): void
+    // ======================
+    // PROCESSING
+    // ======================
+    public function processDaily(int $userId, string $date)
     {
-        if (! $lat || ! $lng) {
-            throw new Exception('Location not detected');
+        $start = Carbon::parse($date)->startOfDay();
+        $end = Carbon::parse($date)->endOfDay()->addDay();
+
+        $logs = AttendanceLog::where('user_id', $userId)
+            ->whereBetween('recorded_at', [$start, $end])
+            ->orderBy('recorded_at')
+            ->get();
+
+        if (! $this->isWorkingDay($userId, $date)) {
+            return null;
+        }
+
+        if ($this->isHoliday($date)) {
+            return $this->store($userId, $date, ['status' => 'holiday']);
+        }
+
+        if ($this->isLeave($userId, $date)) {
+            return $this->store($userId, $date, ['status' => 'leave']);
+        }
+
+        if ($logs->isEmpty()) {
+            return $this->store($userId, $date, ['status' => 'absent']);
+        }
+
+        $checkin = $logs->firstWhere('type', 'checkin');
+        $checkout = $logs->where('type', 'checkout')->last();
+
+        if (! $checkin) {
+            return $this->store($userId, $date, ['status' => 'absent']);
+        }
+
+        $breakMinutes = $this->calculateBreakMinutes($logs);
+
+        $workMinutes = $checkout
+            ? Carbon::parse($checkin->recorded_at)->diffInMinutes($checkout->recorded_at) - $breakMinutes
+            : 0;
+
+        [$late, $early, $overtime] = $this->calculateShiftMetrics($userId, $checkin, $checkout);
+
+        return $this->store($userId, $date, [
+            'status' => 'present',
+            'checkin_at' => $checkin->recorded_at,
+            'checkout_at' => $checkout?->recorded_at,
+            'work_minutes' => max(0, $workMinutes),
+            'break_minutes' => $breakMinutes,
+            'late_minutes' => $late,
+            'early_leave_minutes' => $early,
+            'overtime_minutes' => $overtime,
+        ]);
+    }
+
+    protected function calculateBreakMinutes($logs): int
+    {
+        $stack = [];
+        $total = 0;
+
+        foreach ($logs as $log) {
+            if ($log->type === 'break_start') {
+                $stack[] = $log;
+            }
+
+            if ($log->type === 'break_end' && ! empty($stack)) {
+                $start = array_pop($stack);
+                $total += Carbon::parse($start->recorded_at)
+                    ->diffInMinutes($log->recorded_at);
+            }
+        }
+
+        return $total;
+    }
+
+    protected function calculateShiftMetrics($userId, $checkin, $checkout): array
+    {
+        $shift = $this->getTodayShiftDetail($userId);
+
+        if (! $shift) {
+            return [0, 0, 0];
+        }
+
+        $start = Carbon::parse($shift->start_time);
+        $end = Carbon::parse($shift->end_time);
+
+        if ($shift->is_overnight) {
+            $end->addDay();
+        }
+
+        $late = $checkin && $checkin->recorded_at > $start
+            ? $start->diffInMinutes($checkin->recorded_at)
+            : 0;
+
+        $early = $checkout && $checkout->recorded_at < $end
+            ? Carbon::parse($checkout->recorded_at)->diffInMinutes($end)
+            : 0;
+
+        $overtime = $checkout && $checkout->recorded_at > $end
+            ? $end->diffInMinutes($checkout->recorded_at)
+            : 0;
+
+        return [$late, $early, $overtime];
+    }
+
+    protected function store($userId, $date, array $data)
+    {
+        return Attendance::updateOrCreate(
+            ['user_id' => $userId, 'date' => $date],
+            $data
+        );
+    }
+
+    // ======================
+    // VALIDATIONS
+    // ======================
+    protected function isWorkingDay(int $userId, string $date): bool
+    {
+        $day = $this->getWorkScheduleDay($userId, $date);
+
+        return $day && $day->is_working_day;
+    }
+
+    protected function isHoliday(string $date): bool
+    {
+        return Holiday::whereDate('date', $date)->exists();
+    }
+
+    protected function isLeave(int $userId, string $date): bool
+    {
+        return Leave::where('user_id', $userId)
+            ->where('status', 'approved')
+            ->whereDate('start_date', '<=', $date)
+            ->whereDate('end_date', '>=', $date)
+            ->exists();
+    }
+
+    protected function validateHolidayToday(): void
+    {
+        if ($this->isHoliday(now()->toDateString())) {
+            throw new Exception('Today is a holiday');
+        }
+    }
+
+    protected function validateLeaveToday(int $userId): void
+    {
+        if ($this->isLeave($userId, now()->toDateString())) {
+            throw new Exception('You are on leave');
         }
     }
 
     protected function validateWorkingDay(int $userId): void
     {
-        $day = $this->getWorkScheduleDay($userId);
-
-        if (! $day || ! $day->is_working_day) {
-            throw new Exception('Today is not a working day');
+        if (! $this->isWorkingDay($userId, now()->toDateString())) {
+            throw new Exception('Not a working day');
         }
     }
 
-    protected function validateHoliday(int $userId): void
-    {
-        if (Holiday::whereDate('date', now())->exists()) {
-            throw new Exception('Today is a holiday');
-        }
-    }
-
-    protected function validateLeave(int $userId): void
-    {
-        $today = now()->toDateString();
-
-        if (Leave::where('user_id', $userId)
-            ->where('status', 'approved')
-            ->whereDate('start_date', '<=', $today)
-            ->whereDate('end_date', '>=', $today)
-            ->exists()) {
-            throw new Exception('You are on leave');
-        }
-    }
-
-    protected function validateShiftTime(int $userId, string $type): void
+    protected function validateShiftTime(int $userId): void
     {
         $shift = $this->getTodayShiftDetail($userId);
 
@@ -231,20 +349,12 @@ class AttendanceService
             $end->addDay();
         }
 
-        if ($type === 'checkin') {
-            if ($now->lt($start->subMinutes($shift->tolerance_late ?? 0))) {
-                throw new Exception('Too early to check-in');
-            }
-        }
-
-        if ($type === 'checkout') {
-            if ($now->lt($start)) {
-                throw new Exception('Cannot checkout before shift starts');
-            }
+        if ($now < $start->subMinutes($shift->tolerance_late ?? 0) || $now > $end) {
+            throw new Exception('Outside shift time');
         }
     }
 
-    protected function validateBreakRule(int $userId): BreakRule
+    protected function validateBreakRule(int $userId)
     {
         $shift = $this->getTodayShiftDetail($userId);
 
@@ -254,46 +364,36 @@ class AttendanceService
 
         $rules = BreakRule::where('shift_id', $shift->id)->get();
 
-        if ($rules->isEmpty()) {
-            throw new Exception('No break rule defined');
-        }
-
-        $now = now()->format('H:i:s');
-
         foreach ($rules as $rule) {
-            if ($rule->is_flexible) {
-                return $rule;
-            }
-
-            if ($rule->start_time && $rule->end_time) {
-                if ($now >= $rule->start_time && $now <= $rule->end_time) {
-                    return $rule;
-                }
+            if ($rule->start_time &&
+                now()->format('H:i:s') >= $rule->start_time &&
+                now()->format('H:i:s') <= $rule->end_time) {
+                return;
             }
         }
 
-        throw new Exception('Break not allowed at this time');
+        if ($rules->where('is_flexible', true)->isNotEmpty()) {
+            return;
+        }
+
+        throw new Exception('Break not allowed');
     }
 
-    protected function getWorkScheduleDay(int $userId): ?WorkScheduleDay
+    protected function getWorkScheduleDay(int $userId, $date = null): ?WorkScheduleDay
     {
-        $today = now()->toDateString();
-        $dayOfWeek = now()->dayOfWeekIso;
+        $date = $date ?? now()->toDateString();
+        $dayOfWeek = Carbon::parse($date)->dayOfWeekIso;
 
         $schedule = EmployeeSchedule::with('workSchedule.days')
             ->where('user_id', $userId)
-            ->whereDate('start_date', '<=', $today)
-            ->where(function ($q) use ($today) {
+            ->whereDate('start_date', '<=', $date)
+            ->where(function ($q) use ($date) {
                 $q->whereNull('end_date')
-                    ->orWhereDate('end_date', '>=', $today);
+                    ->orWhereDate('end_date', '>=', $date);
             })
             ->first();
 
-        if (! $schedule) {
-            return null;
-        }
-
-        return $schedule->workSchedule->days
+        return $schedule?->workSchedule->days
             ->firstWhere('day_of_week', $dayOfWeek);
     }
 
@@ -310,7 +410,7 @@ class AttendanceService
             ->first();
 
         if (! $assignment || ! $assignment->branch) {
-            throw new Exception('No active branch assigned');
+            throw new Exception('No branch assigned');
         }
 
         $distance = $this->calculateDistance(
@@ -321,7 +421,14 @@ class AttendanceService
         );
 
         if ($distance > $assignment->branch->radius) {
-            throw new Exception('You are outside allowed area');
+            throw new Exception('Outside allowed area');
+        }
+    }
+
+    protected function ensureLocation(?float $lat, ?float $lng): void
+    {
+        if (! $lat || ! $lng) {
+            throw new Exception('Location not detected');
         }
     }
 
