@@ -21,7 +21,7 @@
                         </flux:table.cell>
 
                         <flux:table.cell>
-                            {{ $schedule->schedule?->name }}
+                            {{ $schedule->workSchedule?->name }}
                         </flux:table.cell>
 
                         <flux:table.cell>

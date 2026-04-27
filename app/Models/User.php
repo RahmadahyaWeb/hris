@@ -49,4 +49,26 @@ class User extends Authenticatable
     {
         return $this->hasMany(AttendanceLog::class);
     }
+
+    public function employeeAssignments()
+    {
+        return $this->hasMany(EmployeeAssignment::class);
+    }
+
+    public function employeeAssignment()
+    {
+        return $this->hasOne(EmployeeAssignment::class)
+            ->where('is_active', true);
+    }
+
+    public function employeeSchedules()
+    {
+        return $this->hasMany(EmployeeSchedule::class);
+    }
+
+    public function employeeSchedule()
+    {
+        return $this->hasOne(EmployeeSchedule::class)
+            ->where('is_active', true);
+    }
 }

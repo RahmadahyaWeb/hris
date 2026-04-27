@@ -24,7 +24,7 @@ new #[Title('Employee Schedules')] class extends Component
     #[Computed()]
     public function schedules()
     {
-        return EmployeeSchedule::with(['user', 'schedule'])->paginate(10);
+        return EmployeeSchedule::with(['user', 'workSchedule'])->paginate(10);
     }
 
     public function confirmDelete(int $id): void

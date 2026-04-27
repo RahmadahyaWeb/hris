@@ -1,5 +1,7 @@
 <?php
 
+// app/Models/WorkScheduleDay.php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -13,9 +15,9 @@ class WorkScheduleDay extends Model
         'is_working_day',
     ];
 
-    public function schedule()
+    public function workSchedule()
     {
-        return $this->belongsTo(WorkSchedule::class, 'work_schedule_id');
+        return $this->belongsTo(WorkSchedule::class);
     }
 
     public function shift()

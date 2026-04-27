@@ -54,17 +54,30 @@
                 <flux:table.column>Check In</flux:table.column>
                 <flux:table.column>Check Out</flux:table.column>
                 <flux:table.column>Work</flux:table.column>
+                <flux:table.column>Break</flux:table.column>
+                <flux:table.column>Late</flux:table.column>
+                <flux:table.column>Early</flux:table.column>
+                <flux:table.column>Overtime</flux:table.column>
+                <flux:table.column>Description</flux:table.column>
             </flux:table.columns>
 
             <flux:table.rows>
                 @forelse ($this->attendances as $item)
                     <flux:table.row>
+
                         <flux:table.cell>{{ $item->user->name }}</flux:table.cell>
-                        <flux:table.cell>{{ optional($item->user->employeeAssignments->first()?->department)->name }}
+
+                        <flux:table.cell>
+                            {{ optional($item->user->employeeAssignment?->department)->name }}
                         </flux:table.cell>
-                        <flux:table.cell>{{ optional($item->user->employeeAssignments->first()?->position)->name }}
+
+                        <flux:table.cell>
+                            {{ optional($item->user->employeeAssignment?->position)->name }}
                         </flux:table.cell>
-                        <flux:table.cell>{{ $item->date->format('d M Y') }}</flux:table.cell>
+
+                        <flux:table.cell>
+                            {{ $item->date->format('d M Y') }}
+                        </flux:table.cell>
 
                         <flux:table.cell>
                             <span
@@ -79,11 +92,21 @@
 
                         <flux:table.cell>{{ optional($item->checkin_at)->format('H:i') }}</flux:table.cell>
                         <flux:table.cell>{{ optional($item->checkout_at)->format('H:i') }}</flux:table.cell>
-                        <flux:table.cell>{{ $item->work_minutes }} min</flux:table.cell>
+
+                        <flux:table.cell>{{ $item->work_minutes }}</flux:table.cell>
+                        <flux:table.cell>{{ $item->break_minutes }}</flux:table.cell>
+                        <flux:table.cell>{{ $item->late_minutes }}</flux:table.cell>
+                        <flux:table.cell>{{ $item->early_leave_minutes }}</flux:table.cell>
+                        <flux:table.cell>{{ $item->overtime_minutes }}</flux:table.cell>
+
+                        <flux:table.cell>
+                            {{ $item->description }}
+                        </flux:table.cell>
+
                     </flux:table.row>
                 @empty
                     <flux:table.row>
-                        <flux:table.cell colspan="8" class="text-center text-gray-500">
+                        <flux:table.cell colspan="13" class="text-center text-gray-500">
                             No data available
                         </flux:table.cell>
                     </flux:table.row>
